@@ -1,6 +1,6 @@
 {
   "name": "vue-guspread",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Guspread is a Simple Spreadsheet Component for Vue.js",
   "author": "Michikazu Sugahara",
   "repository": "https://github.com/misu007/vue-guspread",
