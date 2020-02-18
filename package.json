@@ -20,7 +20,7 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "build:npm": "vue-cli-service build --target lib --name vue-guspread src/lib-main.js"
+    "build:npm": "vue-cli-service build --target lib --name vue-guspread src/wrapper.js"
   },
   "main": "dist/vue-guspread.common.js",
   "unpkg": "dist/vue-guspread.umd.min.js",
