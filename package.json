@@ -1,14 +1,26 @@
 {
   "name": "vue-guspread",
   "version": "0.1.0",
-  "private": true,
+  "description": "Guspread is a Simple Spreadsheet Component for Vue.js",
+  "author": "Michikazu Sugahara",
+  "license": "MIT",
+  "private": false,
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build"
+    "build": "vue-cli-service build",
+    "build:npm": "vue-cli-service build --target lib --name vue-guspread src/lib-main.js"
   },
+  "main": "dist/vue-guspread.common.js",
+  "unpkg": "dist/vue-guspread.umd.min.js",
   "dependencies": {
     "core-js": "^3.6.4",
     "vue": "^2.6.11"
+  },
+  "peerDependencies": {
+    "vue": "^2.6.6"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^4.2.0",
