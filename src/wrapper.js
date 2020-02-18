@@ -1,21 +1,26 @@
-import VGuspread from "./components/VueGuspread.vue";
+import component from './components/VueGuspread.vue';
 
-export function install(Vue) {
+function install(Vue, options) {
     if (install.installed) return;
     install.installed = true;
-    Vue.component('VGuspread', VGuspread);
+    Vue.component('v-guspread', component);
 }
+
 const plugin = {
-    install,
+    install
 };
+
 let GlobalVue = null;
 if (typeof window !== 'undefined') {
     GlobalVue = window.Vue;
 } else if (typeof global !== 'undefined') {
     GlobalVue = global.Vue;
 }
+
 if (GlobalVue) {
     GlobalVue.use(plugin);
 }
 
-export default VGuspread;
+component.install = install;
+
+export default component;

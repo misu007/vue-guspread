@@ -3,7 +3,16 @@
   "version": "0.1.1",
   "description": "Guspread is a Simple Spreadsheet Component for Vue.js",
   "author": "Michikazu Sugahara",
+  "repository": "https://github.com/misu007/vue-guspread",
   "license": "MIT",
+  "keywords": [
+    "Vue",
+    "Spreadsheet",
+    "Excel",
+    "Grid",
+    "DataTable",
+    "Table"
+  ],
   "private": false,
   "files": [
     "dist"
@@ -15,6 +24,7 @@
   },
   "main": "dist/vue-guspread.common.js",
   "unpkg": "dist/vue-guspread.umd.min.js",
+  "jsdelivr": "dist/vue-guspread.umd.min.js",
   "dependencies": {
     "core-js": "^3.6.4",
     "vue": "^2.6.11"
