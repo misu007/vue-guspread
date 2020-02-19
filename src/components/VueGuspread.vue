@@ -62,7 +62,7 @@
         :data-editmode="isEditMode"
         :style="`padding:0;transform: translate(${cursors.x}px, ${cursors.y}px);width:${cursors.w}px;height:${cursors.h}px;top:-1px;left:-1px`"
       >
-        <div v-show="isEditMode && cursors.active" ref="form">
+        <div v-show="isEditMode && cursors.active" ref="form" class="form-container">
           <form @submit="submitted">
             <slot name="input" :field="selectedField" :item="value[s.a.r]">
               <input type="text" v-model="value[s.a.r][selectedField[nameKey]]" />
@@ -587,171 +587,177 @@ export default {
   width: 100%;
   height: 100%;
   overflow: scroll;
-}
 
-.guspread-container {
-  position: relative;
-}
-
-.guspread-table {
-  border-collapse: collapse;
-  table-layout: fixed;
-  width: 100%;
-
-  thead th, th:first-child {
-    width: 50px;
-    text-align: center;
-    background-color: #F5F5F5;
+  .guspread-container {
+    position: relative;
   }
 
-  thead th {
-    position: -webkit-sticky;
-    position: sticky;
-    border-top: 0.1px solid #ddd;
-    top: 0;
-    z-index: 1;
-    padding: 4px;
-    font-size: 12px;
-    font-weight: bold;
-    text-align: center;
-  }
+  .guspread-table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
 
-  th:first-child {
-    position: -webkit-sticky;
-    position: sticky;
-    left: 0;
-    border-left: 0.1px solid #ddd;
-  }
+    thead th, th:first-child {
+      width: 50px;
+      text-align: center;
+      background-color: #F5F5F5;
+    }
 
-  thead th:first-child {
-    z-index: 2;
-  }
-
-  tr {
-    th, td {
-      height: 27px;
-      padding: 0;
-      width: 150px;
-      white-space: nowrap;
-      overflow: hidden;
+    thead th {
+      position: -webkit-sticky;
+      position: sticky;
+      border-top: 0.1px solid #ddd;
+      top: 0;
+      z-index: 1;
+      padding: 4px;
       font-size: 12px;
-      border-bottom: 0.1px solid #ddd;
-      border-right: 0.1px solid #ddd;
-      -moz-user-select: none;
-      -webkit-user-select: none;
-      -ms-user-select: none;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    th:first-child {
+      position: -webkit-sticky;
+      position: sticky;
+      left: 0;
+      border-left: 0.1px solid #ddd;
+    }
+
+    thead th:first-child {
+      z-index: 2;
+    }
+
+    tr {
+      th, td {
+        height: 27px;
+        padding: 0;
+        width: 150px;
+        white-space: nowrap;
+        overflow: hidden;
+        font-size: 12px;
+        border-bottom: 0.1px solid #ddd;
+        border-right: 0.1px solid #ddd;
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+      }
+    }
+
+    th[data-select=true] {
+      background-color: #E0E0E0;
+      color: #000;
+    }
+
+    tbody tr td {
+      text-align: left;
+      padding: 0 2px;
     }
   }
 
-  th[data-select=true] {
-    background-color: #E0E0E0;
-    color: #000;
+  .guspread-container[data-inactive=true] {
+    filter: grayscale(1);
   }
 
-  tbody tr td {
-    text-align: left;
-  }
-}
-
-.guspread-container[data-inactive=true] {
-  filter: grayscale(1);
-}
-
-input, form {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  outline: 0;
-  color: #616161;
-  font-weight: inherit;
-  font-style: inherit;
-  font-family: inherit;
-  font-size: 100%;
-  vertical-align: baseline;
-  box-sizing: border-box;
-  box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  -webkit-box-sizing: border-box;
-}
-
-.cursor {
-  padding: 2px;
-  z-index: 3;
-
-  input, select {
-    pointer-events: all;
-    width: 100%;
-    height: 27px;
-    border: none;
+  .form-container {
+    width: calc(100% - 5px);
+    padding: 0 2px;
+    
+    input, form {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      outline: 0;
+      color: #616161;
+      font-weight: inherit;
+      font-style: inherit;
+      font-family: inherit;
+      font-size: 12px;
+      vertical-align: baseline;
+      box-sizing: border-box;
+      box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      -webkit-box-sizing: border-box;
+    }
   }
 
-  input:focus, input[type]:focus {
-    outline: 0;
-    box-shadow: none;
+  .cursor {
+    padding: 2px;
+    z-index: 3;
+
+    input, select {
+      pointer-events: all;
+      width: 100%;
+      height: 27px;
+      border: none;
+    }
+
+    input:focus, input[type]:focus {
+      outline: 0;
+      box-shadow: none;
+      border: 0;
+      background-color: #ffffff;
+    }
+  }
+
+  .cursor {
+    position: absolute;
+    border: 1.5px solid #448AFF;
+    pointer-events: none;
+  }
+
+  .cursor[data-editmode=true] {
+    border-color: #FFC400;
+  }
+
+  .cursor[data-multi=true] {
+    background-color: rgba(64, 196, 255, 0.06);
+  }
+
+  .header-boundary {
+    position: absolute;
+    background-color: #00B0FF;
+    pointer-events: none;
+  }
+
+  .cursor-multi {
+    position: absolute;
+    border: 0.5px solid #448AFF;
+    pointer-events: none;
+  }
+
+  .cursor-multi[data-dragging=true] {
+    position: absolute;
+    border: 0.5px solid #40C4FF;
+    pointer-events: none;
+  }
+
+  .cursor[data-draggingheader=true], .cursor-multi[data-draggingheader=true], .cursor-multi-corner[data-draggingheader=true] {
     border: 0;
-    background-color: #ffffff;
+    background-color: transparent;
   }
-}
 
-.cursor {
-  position: absolute;
-  border: 1.5px solid #448AFF;
-  pointer-events: none;
-}
+  .cursor-multi-corner {
+    position: absolute;
+    background-color: #448AFF;
+    border: 1px solid #fff;
+    width: 5px;
+    height: 5px;
+    pointer-events: none;
+  }
 
-.cursor[data-editmode=true] {
-  border-color: #FFC400;
-}
+  .table-header .column {
+    background-color: #F5F5F5;
+    text-align: center;
+  }
 
-.cursor[data-multi=true] {
-  background-color: rgba(64, 196, 255, 0.06);
-}
+  .table-header .column[data-selectedallrows=true] {
+    background-color: #666;
+    color: #fff;
+  }
 
-.header-boundary {
-  position: absolute;
-  background-color: #00B0FF;
-  pointer-events: none;
-}
-
-.cursor-multi {
-  position: absolute;
-  border: 0.5px solid #448AFF;
-  pointer-events: none;
-}
-
-.cursor-multi[data-dragging=true] {
-  position: absolute;
-  border: 0.5px solid #40C4FF;
-  pointer-events: none;
-}
-
-.cursor[data-draggingheader=true], .cursor-multi[data-draggingheader=true], .cursor-multi-corner[data-draggingheader=true] {
-  border: 0;
-  background-color: transparent;
-}
-
-.cursor-multi-corner {
-  position: absolute;
-  background-color: #448AFF;
-  border: 1px solid #fff;
-  width: 5px;
-  height: 5px;
-  pointer-events: none;
-}
-
-.table-header .column {
-  background-color: #F5F5F5;
-  text-align: center;
-}
-
-.table-header .column[data-selectedallrows=true] {
-  background-color: #666;
-  color: #fff;
-}
-
-.header-title {
-  padding: 4px;
-  font-size: 12px;
-  font-weight: bold;
+  .header-title {
+    padding: 4px;
+    font-size: 12px;
+    font-weight: bold;
+  }
 }
 </style>

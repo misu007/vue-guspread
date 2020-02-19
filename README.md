@@ -41,7 +41,7 @@ export default {
 ```
 
 ## Get Started
-npm
+### npm
 ```vue
 <template>
   <div style="width:100%;height:400px;">
@@ -73,7 +73,7 @@ export default {
 </script>
 ```
 
-CDN
+### CDN
 ```html
 <!DOCTYPE html>
 <html>
@@ -112,7 +112,7 @@ CDN
 </html>
 ```
 
-Visualforce
+### Visualforce
 ```html
 <apex:page docType="html-5.0" applyHtmlTag="false" applyBodyTag="false" standardStylesheets="false" showHeader="false">
     <html xmlns:v-bind="http://vue.org" xmlns:v-on="http://vue.org" xmlns:v-slot="http://vue.org">
@@ -181,13 +181,13 @@ Visualforce
       <td>nameKey</td>
       <td>String</td>
       <td>The value of this property represents the field key of each items</td>
-      <td>name</td>        
+      <td>'name'</td>        
     </tr>
     <tr>
       <td>labelKey</td>
       <td>String</td>
       <td>The value of this property represents the default label of each fields</td>
-      <td>label</td>        
+      <td>'label'</td>        
     </tr>
     <tr>
       <td>cellClass</td>
@@ -216,17 +216,17 @@ Visualforce
   <tbody>
     <tr>
       <td>field</td>
-      <td>`{"field": Object}`</td>
+      <td>{"field": Object}</td>
       <td></td>        
     </tr>
     <tr>
       <td>cell</td>
-      <td>`{"field": Object, "item": Object, "rid": Number, "cid": Number}`</td>
+      <td>{"field": Object, "item": Object, "rid": Number, "cid": Number}</td>
       <td></td>        
     </tr>
     <tr>
       <td>input</td>
-      <td>`{"field": Object, "item": Object}`</td>
+      <td>{"field": Object, "item": Object}</td>
       <td></td>        
     </tr>
   </tbody>
