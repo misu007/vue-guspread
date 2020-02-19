@@ -2,7 +2,7 @@
 Guspread is a Javascript Spreadsheet Component for Vue.
 
 <p align="center"> 
-  <img src="https://misu007.github.io/vue-guspread/vue-guspread-demo.png"/>
+  <img src="https://misu007.github.io/vue-guspread/vue-guspread-demo.png" alt="demo-image"/>
 </p>
 
 ## DEMO
