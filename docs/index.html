@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Guspread Demo</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui"/>
+        <link href="https://cdn.jsdelivr.net/npm/vue-guspread@latest/dist/vue-guspread.css" rel="stylesheet"/>
+    </head>
+    <body>
+        <div id="app">
+            <h3>Guspread</h3>
+            <div style="height:300px;width:100%">
+                <v-guspread v-model="dataset" :fields="fields"></v-guspread>
+            </div>
+
+            <h3>Dataset</h3>
+            <p>{{dataset}}</p>
+        </div>
+        
+        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue-guspread@latest"></script>
+        
+        <script>
+        new Vue({
+            el: '#app',
+            data: {
+                fields: [
+                    { name: "c1", label: "A" },
+                    { name: "c2", label: "B" },
+                    { name: "c3", label: "C" },
+                    { name: "c4", label: "D" },
+                    { name: "c5", label: "E" },
+                    { name: "c6", label: "F" }
+                ],
+                dataset: [
+                    { c1: "blue", c2: "banana", c3: "sky", c4: "blue", c5: "banana", c6: "sky" },
+                    { c1: "red", c2: "apple", c3: "river", c4: "red", c5: "apple", c6: "river" },
+                    { c1: "orange", c2: "orange", c3: "mountain", c4: "orange", c5: "orange", c6: "mountain" },
+                    { c1: "white", c2: "rasberry", c3: "lake", c4: "white", c5: "rasberry", c6: "lake" },
+                    { c1: "blue", c2: "banana", c3: "sky", c4: "blue", c5: "banana", c6: "sky" },
+                    { c1: "red", c2: "apple", c3: "river", c4: "red", c5: "apple", c6: "river" },
+                    { c1: "orange", c2: "orange", c3: "mountain", c4: "orange", c5: "orange", c6: "mountain" },
+                    { c1: "white", c2: "rasberry", c3: "lake", c4: "white", c5: "rasberry", c6: "lake" },
+                    { c1: "blue", c2: "banana", c3: "sky", c4: "blue", c5: "banana", c6: "sky" },
+                    { c1: "red", c2: "apple", c3: "river", c4: "red", c5: "apple", c6: "river" },
+                    { c1: "orange", c2: "orange", c3: "mountain", c4: "orange", c5: "orange", c6: "mountain" },
+                    { c1: "white", c2: "rasberry", c3: "lake", c4: "white", c5: "rasberry", c6: "lake" },
+                    { c1: "blue", c2: "banana", c3: "sky", c4: "blue", c5: "banana", c6: "sky" },
+                    { c1: "red", c2: "apple", c3: "river", c4: "red", c5: "apple", c6: "river" },
+                    { c1: "orange", c2: "orange", c3: "mountain", c4: "orange", c5: "orange", c6: "mountain" },
+                    { c1: "white", c2: "rasberry", c3: "lake", c4: "white", c5: "rasberry", c6: "lake" }
+                ]
+            }
+        });
+        </script>
+    </body>
+</html>

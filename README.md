@@ -1,6 +1,8 @@
 # Guspread
-
 Guspread is a Javascript Spreadsheet Component for Vue.
+
+## DEMO
+[https://misu007.github.io/vue-guspread/](https://misu007.github.io/vue-guspread/)
 
 ## Install
 
@@ -9,7 +11,7 @@ Guspread is a Javascript Spreadsheet Component for Vue.
 npm install vue-guspread
 ```
 
-After installing, you can register the component eighter globaly or localy you would like.
+After installing, please register the component either globaly or localy you would like.
 
 #### Global Registration
 ```js
@@ -30,7 +32,7 @@ export default {
 ```
 
 ### CDN
-You can use `<v-guspread></v-guspread>` tag after loading the css/javascript files below. 
+`<v-guspread></v-guspread>` tag will be available after loading the javascript library. 
 ```html
 <link href="https://cdn.jsdelivr.net/npm/vue-guspread@latest/dist/vue-guspread.css" rel="stylesheet"/>
 
@@ -101,7 +103,7 @@ CDN
                     { c1: "blue", c2: "banana", c3: "sky" },
                     { c1: "red", c2: "apple", c3: "river" },
                     { c1: "orange", c2: "orange", c3: "mountain" },
-                    { c1: "white", c2: "rasberry", c3: "lake" }
+                    { c1: "white", c2: "raspberry", c3: "lake" }
                 ]
             }
         });
@@ -140,7 +142,7 @@ Visualforce
                         { c1: "blue", c2: "banana", c3: "sky" },
                         { c1: "red", c2: "apple", c3: "river" },
                         { c1: "orange", c2: "orange", c3: "mountain" },
-                        { c1: "white", c2: "rasberry", c3: "lake" }
+                        { c1: "white", c2: "raspberry", c3: "lake" }
                     ]
                 }
             });
