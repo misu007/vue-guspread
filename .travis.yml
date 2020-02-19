@@ -1,5 +1,14 @@
 language: node_js
 node_js:
-- stable
-- '6'
-- '4'
+- '12'
+install:
+- npm install
+script:
+- npm run build:npm
+deploy:
+  provider: npm
+  email: 'misu007.github@gmail.com'
+  api_key:
+    secure: JzbXMgVoTnscxgKHvZgPjTNkaEUZ2wMwauozUZkiVGsusCM2hTwzxTT0PLPlJ0grEmjsinSUg8FbN1ax0v/RVFV7kPtwkmKpu5cmaJkcv5ZTCGqWE5NkY0Yrw5QrrlRUTKNu1aN+mYpOfH3zYs1huvCjYNf9hd1hCiAoDRCuVjkFIx4RQ1gso5mOE6DYzMr0ZZf+F0liNmVEby6ULImdyUqJT70zXnyB/ha2R76bDkGhRk/9hqdlw2ABt89spi7QJIo2AixPdqjUHV5f8Jf2HkAngl6+1C9l2EpQlS6CmzmWy2Sfhy1LI8hGAml2LJHA5OIu1zP2RAUeaz7+vdZgn3WNuuIv+EJ6DzFPvwM1iEtbIL9u2dU9ecdFzicLJb4IjmDkQYy6B2ZAk7N6wkmPfGa6wTZ45ZIqArH+seWw5z7lorpIcXDNad6s0e9YUHr7jwUmeO5CWeZsodK5VrcDsOuh7HvnVZkT5bytSMBlYzM/9JaBmWNXjc0qxx5hZQFktYubM/5Dr6SGUTQUMka4CJna1/KwHMLm7nbDuqSSnYhfZ/xGmBvLc54/2aeBEx5YiIC4/5/nadpvxKmosSf7k2gy8ppidi+qKNEBY94FpH9VqSMXOota/yC2s68rTfX6K2QqOnF5PhOXitr4XOxhIgvLNBmWJLTQTrvoordV5f0=
+  on:
+    tags: true
