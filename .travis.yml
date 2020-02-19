@@ -7,9 +7,8 @@ script:
 - npm run build:npm
 deploy:
   provider: npm
-  email: 'misu007.github@gmail.com'
-  api_key:
-    secure: eav66CgB8/Y0mb60tSbEF7t4l7G2X6ibZz2QYVDP6ggO9zaAwKdLg4SxaFPu/FNjvHYFCSgJ8AEnSrX/GWR5uqFKY4VqVkRVzTmNSC5gM1fQ9I6rIsnI5l2oxRqWZyqkjinxl9e8PLNyofYH/vupwfafmJyor7IezUH0lT/C/ya/WJD6dWjzQNyguPXIrjU5sEcMa9z/lhOCCNrU0CKDcHkoFpiirxNXPl1BG0b7e/CrdztaQQiPqeBw/4SdPw3oceU++VBeT2zvEINr4irmXXiXTG5VyO5YBuTRO187X83Otksr4Z3gdZTFxpfOXNb4mBJRSUV+RS2u9sMDr7PvesJB4uhr3yP0fKauWCqsZy3Dba9M/ubJlJ9c0bvebOZabsO5qO1/gLl3xXL6fwGKEVZ89TYlqLlm+FIxyLF4iPJTqeImbS54AgNgIsLAl86wpKIIFyHJBZA1w2PB+vMHxCw+KtwNLOljO2Ena/0efn8iQJ4gHi3qiwFdB5ClU3xuVSuyfRogMTi4PPQgF0HNk0D46bsT8VIg063u2VCYqCcEetEVIUstFtvP21iJFJJnvfkbUGuhFCUgjts0gtPrY7tx0zRPOz5oTuQNsrvxzvq1h7Q9Ezm2qTo9/+azpcVua6/h0Z8U9eGceY3lM0DIKQz0y/Z82hsmG4EpHhSPlEM=
+  email: $NPM_EMAIL
+  api_key: $NPM_AUTH_TOKEN
   on:
     tags: true
   skip_cleanup: true
