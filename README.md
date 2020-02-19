@@ -1,4 +1,4 @@
-# Guspread
+# Guspread [![Build Status](https://travis-ci.org/misu007/vue-guspread.svg?branch=master)](https://travis-ci.org/misu007/vue-guspread)
 Guspread is a Javascript Spreadsheet Component for Vue.
 
 ## DEMO
