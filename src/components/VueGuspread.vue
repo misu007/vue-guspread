@@ -75,7 +75,7 @@
                     row:rid, 
                     col:cid, 
                     value:value[rid][fields[cid][nameKey]]
-                    }): ''}`"
+                    }).join(' '): ''}`"
               @mousedown.exact="clickedDownCell(rid, cid)"
               @mousedown.shift.exact.stop="clickedDownCellWithShift(rid, cid)"
               @dblclick.stop="dblclickedCell(rid, cid)"

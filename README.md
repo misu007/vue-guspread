@@ -320,7 +320,7 @@ export default {
       if (!field.updateable) {
         ret.push("is-readonly");
       }
-      return ret.join(" ");
+      return ret;
     },
     cellReadonly: ({ field }) => {
       return !field.updateable;
