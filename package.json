@@ -19,7 +19,6 @@
   ],
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
     "build:npm": "vue-cli-service build --target lib --name vue-guspread src/wrapper.js",
     "postversion": "git push origin $(git describe --abbrev=0 --tags)"
   },
@@ -27,7 +26,6 @@
   "unpkg": "dist/vue-guspread.umd.min.js",
   "jsdelivr": "dist/vue-guspread.umd.min.js",
   "dependencies": {
-    "core-js": "^3.6.4",
     "vue": "^2.6.11"
   },
   "peerDependencies": {

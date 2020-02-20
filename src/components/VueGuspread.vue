@@ -775,7 +775,7 @@ export default {
   .guspread-table {
     border-collapse: collapse;
     table-layout: fixed;
-    width: 100%;
+    width: fit-content;
 
     thead {
       th {

@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <div style="width: 100%;">
+    <div style="width: 100%; ">
       <v-guspread v-model="dataset" :fields="fields" :cellReadonly="cellReadonly"></v-guspread>
     </div>
   </div>
@@ -26,14 +26,14 @@ export default {
   },
   mounted() {
     let fields = [];
-    for (var i = 1; i < 20; i++) {
+    for (var i = 1; i < 400; i++) {
       fields.push({
         name: "c" + i,
         label: "c" + i
       });
     }
     let dataset = [];
-    for (var i = 0; i < 2000; i++) {
+    for (var i = 0; i < 400; i++) {
       let obj = {};
       fields.forEach((field, idx) => {
         obj[field.name] = "test-" + (i + 1) + "-" + (idx + 1);
