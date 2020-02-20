@@ -69,13 +69,20 @@
             <td
               v-for="cid in visibleWorldCol"
               :key="'row-' + rid + '-column-' + cid"
-              :class="`guspread-table-cell${cellClass ? ' ' + cellClass({
+              :class="`guspread-table-cell${fields[cid] && value[rid] && cellClass ? ' ' + cellClass({
                     field: fields[cid], 
                     item:value[rid], 
                     row:rid, 
                     col:cid, 
                     value:value[rid][fields[cid][nameKey]]
                     }).join(' '): ''}`"
+              :data-readonly="fields[cid] && value[rid] && cellReadonly ? cellReadonly({
+                    field: fields[cid], 
+                    item:value[rid], 
+                    row:rid, 
+                    col:cid, 
+                    value:value[rid][fields[cid][nameKey]]
+                    }): false"
               @mousedown.exact="clickedDownCell(rid, cid)"
               @mousedown.shift.exact.stop="clickedDownCellWithShift(rid, cid)"
               @dblclick.stop="dblclickedCell(rid, cid)"
@@ -128,6 +135,11 @@
           </form>
         </div>
       </div>
+      <div
+        class="copy-cursor"
+        v-if="c != null && c.active"
+        :style="`padding:0;transform: translate(${c.x}px, ${c.y}px);width:${c.w + 1}px;height:${c.h + 1}px;top:-1px;left:-1px`"
+      ></div>
     </div>
   </div>
 </template>
@@ -175,36 +187,17 @@ export default {
     widths: [],
     isEditMode: false,
     isSelecting: false,
-    isCopyed: false,
     s: {
       a: {
         r: null,
-        c: null,
-        x: null,
-        y: null,
-        w: null,
-        h: null
+        c: null
       },
       b: {
         r: null,
-        c: null,
-        x: null,
-        y: null,
-        w: null,
-        h: null
+        c: null
       }
     },
-    c: {
-      active: false,
-      r1: null,
-      c1: null,
-      r2: null,
-      c2: null,
-      x: null,
-      y: null,
-      w: null,
-      h: null
-    },
+    c: null,
     world: null,
     scrolling: false,
     delayTimeout: null
@@ -315,7 +308,7 @@ export default {
     },
     doCopy() {
       if (this.cursors && this.cursors.active) {
-        this.isCopyed = true;
+        this.$set(this, "c", { ...this.cursors });
         const target = Object.assign({}, this.cursors);
         this.$set(this, "c", target);
         navigator.permissions
@@ -352,7 +345,7 @@ export default {
       }
     },
     doPaste() {
-      this.isCopyed = false;
+      this.$set(this, "c", null);
       navigator.permissions.query({ name: "clipboard-read" }).then(result => {
         if (result.state == "granted" || result.state == "prompt") {
           navigator.clipboard.readText().then(rawText => {
@@ -382,16 +375,19 @@ export default {
           if (c >= location.c + cCount) {
             break;
           }
-          const type = this.fields[c].type;
           let val = rows[r - location.r][c - location.c];
-          if (type == "check") {
-            if (val == "true") {
-              val = true;
-            } else if (val == "false") {
-              val = false;
-            }
+          const isReadonly = this.cellReadonly
+            ? this.cellReadonly({
+                field: this.fields[c],
+                item: this.value[r],
+                row: r,
+                col: c,
+                value: this.value[r][this.fields[c][this.nameKey]]
+              })
+            : false;
+          if (!isReadonly) {
+            this.$set(this.value[r], this.fields[c][this.nameKey], val);
           }
-          this.$set(this.value[r], this.fields[c][this.nameKey], val);
         }
       }
 
@@ -725,7 +721,7 @@ export default {
   watch: {
     isEditMode(val) {
       if (val) {
-        this.isCopyed = false;
+        this.$set(this, "c", null);
         this.$nextTick(() => {
           const input = this.$refs.form.getElementsByTagName("input");
           if (input && input.length > 0) {
@@ -758,18 +754,22 @@ export default {
 };
 </script>
 <style scoped lang="stylus">
-.guspread-wrapper::-webkit-scrollbar {
-  display: none;
-}
-
 .guspread-wrapper {
   width: 100%;
   height: 100%;
   max-height: 100vh;
   overflow: scroll;
 
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
   .guspread-container {
     position: relative;
+
+    &[data-inactive=true] {
+      filter: grayscale(1);
+    }
   }
 
   .guspread-table {
@@ -782,7 +782,7 @@ export default {
         position: -webkit-sticky;
         position: sticky;
         top: 0;
-        z-index: 3;
+        z-index: 4;
         font-size: 12px;
         font-weight: bold;
         text-align: center;
@@ -792,14 +792,8 @@ export default {
       th:first-child {
         width: 50px;
         text-align: center;
-        z-index: 4;
+        z-index: 5;
       }
-    }
-
-    th:first-child {
-      position: -webkit-sticky;
-      position: sticky;
-      left: 0;
     }
 
     tr {
@@ -817,6 +811,12 @@ export default {
         -webkit-user-select: none;
         -ms-user-select: none;
       }
+    }
+
+    th:first-child {
+      position: -webkit-sticky;
+      position: sticky;
+      left: 0;
     }
 
     th[data-select=true] {
@@ -847,7 +847,7 @@ export default {
     tbody tr {
       th {
         width: 50px;
-        z-index: 2;
+        z-index: 3;
       }
 
       td {
@@ -855,39 +855,44 @@ export default {
         text-align: left;
         padding: 0 2px;
         position: relative;
-      }
 
-      td::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        border-bottom: 1px solid #eaeaea;
-        border-right: 1px solid #eaeaea;
-        /*
-        bottom: -100%;
-        border-bottom: 1px solid #ccc;
-        transform: scaleY(0.5);
-        transform-origin: 100% 0;
-        */
-      }
+        &::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          border-bottom: 1px solid #eaeaea;
+          border-right: 1px solid #eaeaea;
+          /*
+          bottom: -100%;
+          border-bottom: 1px solid #ccc;
+          transform: scaleY(0.5);
+          transform-origin: 100% 0;
+          */
+        }
 
-      td::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        /*
-        right: -100%;
-        bottom: 0;
-        border-right: 1px solid #ccc;
-        transform: scaleX(0.5);
-        transform-origin: 0 100%;
-        */
+        &::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          /*
+          right: -100%;
+          bottom: 0;
+          border-right: 1px solid #ccc;
+          transform: scaleX(0.5);
+          transform-origin: 0 100%;
+          */
+        }
+
+        &[data-readonly=true] {
+          background-color: #fafafa;
+          color: #999;
+        }
       }
     }
   }
@@ -907,10 +912,6 @@ export default {
     th[data-selectabove=true]::before {
       border-color: #666;
     }
-  }
-
-  .guspread-container[data-inactive=true] {
-    filter: grayscale(1);
   }
 
   .form-container {
@@ -940,8 +941,9 @@ export default {
     z-index: 1;
     position: absolute;
     pointer-events: none;
-    transition: box-shadow 0.1s ease-out;
     caret-color: #41b883;
+    transition: box-shadow 0.2s ease;
+    box-shadow: 0px 0px 12px -3px transparent;
 
     input, select {
       pointer-events: all;
@@ -956,81 +958,60 @@ export default {
       border: 0;
       background-color: #ffffff;
     }
-  }
-
-  .cursor::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border: 2px solid #41b883;
-    transition: all 0.1s ease-out;
-  }
-
-  .cursor[data-editmode=true] {
-    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.14);
 
     &::before {
-      top: -2px;
-      left: -2px;
-      right: -2px;
-      bottom: -2px;
-      /* border: 2px solid #e48c24; */
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border: 2px solid #41b883;
+      transition: all 0.1s ease;
+    }
+
+    &[data-editmode=true] {
+      box-shadow: 0px 0px 12px -3px #41b883;
+
+      &::before {
+        top: -1px;
+        left: -1px;
+        right: -1px;
+        bottom: -1px;
+        border: 1px solid #41b883;
+      }
+    }
+
+    &[data-multi=true] {
+      background-color: rgba(84, 165, 129, 0.08);
     }
   }
 
-  .cursor[data-multi=true] {
-    background-color: rgba(84, 165, 129, 0.06);
-  }
-
-  .header-boundary {
+  .copy-cursor {
+    z-index: 2;
     position: absolute;
-    background-color: #00B0FF;
     pointer-events: none;
-  }
+    transition: box-shadow 0.1s ease-out;
 
-  .cursor-multi {
-    position: absolute;
-    border: 0.5px solid #448AFF;
-    pointer-events: none;
-  }
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border: 2px solid #fff;
+    }
 
-  .cursor-multi[data-dragging=true] {
-    position: absolute;
-    border: 0.5px solid #40C4FF;
-    pointer-events: none;
-  }
-
-  .cursor[data-draggingheader=true], .cursor-multi[data-draggingheader=true], .cursor-multi-corner[data-draggingheader=true] {
-    border: 0;
-    background-color: transparent;
-  }
-
-  .cursor-multi-corner {
-    position: absolute;
-    background-color: #448AFF;
-    border: 1px solid #fff;
-    width: 5px;
-    height: 5px;
-    pointer-events: none;
-  }
-
-  .table-header .column {
-    background-color: #F5F5F5;
-    text-align: center;
-  }
-
-  .table-header .column[data-selectedallrows=true] {
-    background-color: #666;
-    color: #fff;
-  }
-
-  .header-title {
-    padding: 4px;
-    font-size: 12px;
-    font-weight: bold;
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border: 2px dashed #41b883;
+    }
   }
 }
 </style>

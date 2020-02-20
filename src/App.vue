@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <div style="width: 100%;">
-      <v-guspread v-model="dataset" :fields="fields"></v-guspread>
+      <v-guspread v-model="dataset" :fields="fields" :cellReadonly="cellReadonly"></v-guspread>
     </div>
   </div>
 </template>
@@ -13,7 +13,13 @@ export default {
   name: "App",
   data: () => ({
     fields: [],
-    dataset: []
+    dataset: [],
+    cellReadonly: ({ col }) => {
+      if (col == 2 || col == 4 || col == 5) {
+        return true;
+      }
+      return false;
+    }
   }),
   components: {
     VGuspread
@@ -30,7 +36,7 @@ export default {
     for (var i = 0; i < 2000; i++) {
       let obj = {};
       fields.forEach((field, idx) => {
-        obj[field.name] = "test" + idx;
+        obj[field.name] = "test-" + (i + 1) + "-" + (idx + 1);
       });
       dataset.push(obj);
     }
