@@ -1,56 +1,114 @@
 <template>
   <div class="guspread-wrapper" ref="wr">
     <div class="guspread-container" :data-inactive="!active" ref="inner">
-      <table class="guspread-table">
+      <table
+        class="guspread-table"
+        :data-selectedallcol="isSelectedAllCol"
+        :data-selectedallrow="isSelectedAllRow"
+        :data-selectedall="isSelectedAll"
+      >
         <thead>
           <tr>
-            <th></th>
+            <th @click.stop="clickedHeaderRoot"></th>
+
             <th
-              :key="'hd-' + hid"
-              :data-select="cursors.active && cursors.c1 <= hid && cursors.c2 >= hid"
-              v-for="(header, hid) in fields"
+              v-if="invisibleWorldPrependCol && invisibleWorldPrependCol.w"
+              :style="`width:${invisibleWorldPrependCol.w}px;`"
+            ></th>
+
+            <th
+              :key="'hd-' + cid"
+              :data-selectleft="cursors.active && (cursors.c1 - 1) == cid"
+              :data-select="cursors.active && cursors.c1 <= cid && cursors.c2 >= cid"
+              v-for="cid in visibleWorldCol"
+              @mousedown.exact="clickedHeaderCell(cid)"
+              @mousedown.shift.exact.stop="clickedHeaderCellWithShift(cid)"
+              @mouseenter="enteredMouse((value.length - 1), cid)"
+              @mouseup="handleMouseUp()"
             >
-              <slot name="field" :field="header">{{header[labelKey]}}</slot>
+              <template v-if="fields[cid]">
+                <slot name="field" :field="fields[cid]">{{fields[cid][labelKey]}}</slot>
+              </template>
             </th>
+
+            <th
+              v-if="invisibleWorldAppendCol && invisibleWorldAppendCol.w"
+              :style="`width:${invisibleWorldAppendCol.w}px;`"
+            ></th>
           </tr>
         </thead>
         <tbody>
-          <tr :key="'row-' + rid" v-for="(row, rid) in value">
-            <th :data-select="cursors.active && cursors.r1 <= rid && cursors.r2 >= rid">{{rid + 1}}</th>
-            <template v-if="(worldRows.r1 - 2) < rid && (worldRows.r2 + 1) > rid">
-              <template v-for="(column, cid) in fields">
-                <td
-                  v-if="(worldCols.c1 - 2) < cid && (worldCols.c2 + 1 )> cid"
-                  :key="'row-' + rid + '-column-' + cid"
-                  :ref="'td-' + rid + '-' + cid"
-                  :class="`guspread-table-cell${cellClass ? ' ' + cellClass({
+          <!-- Virtual Row-->
+          <tr
+            v-if="invisibleWorldPrependRow && invisibleWorldPrependRow.h"
+            :style="`height:${invisibleWorldPrependRow.h}px;`"
+          ></tr>
+          <!-- Virtual Row-->
+
+          <!-- Visible Row-->
+          <tr :key="'row-' + rid" v-for="rid in visibleWorldRow">
+            <!-- #Row -->
+            <th
+              :data-selectabove="cursors.active && (cursors.r1 - 1) == rid"
+              :data-select="cursors.active && cursors.r1 <= rid && cursors.r2 >= rid"
+              @mousedown.exact="clickedHeaderRow(rid)"
+              @mousedown.shift.exact.stop="clickedHeaderRowWithShift(rid)"
+              @mouseenter="enteredMouse(rid, (fields.length - 1))"
+              @mouseup="handleMouseUp()"
+            >{{rid + 1}}</th>
+            <!-- #Row -->
+
+            <!-- Virtual Col-->
+            <td
+              v-if="invisibleWorldPrependCol && invisibleWorldPrependCol.w"
+              :style="`width:${invisibleWorldPrependCol.w}px;`"
+            ></td>
+            <!-- Virtual Col-->
+
+            <!-- Visible Col -->
+            <td
+              v-for="cid in visibleWorldCol"
+              :key="'row-' + rid + '-column-' + cid"
+              :class="`guspread-table-cell${cellClass ? ' ' + cellClass({
                     field: fields[cid], 
                     item:value[rid], 
                     row:rid, 
                     col:cid, 
                     value:value[rid][fields[cid][nameKey]]
                     }): ''}`"
-                  @mousedown.exact="clickedDownCell($event, rid, cid)"
-                  @mousedown.shift.exact.stop="clickedDownCellWithShift($event, rid, cid)"
-                  @dblclick.stop="dblclickedCell(rid,cid)"
-                  @mouseenter="enteredMouse($event, rid,cid)"
-                  @mouseup="handleMouseUp()"
-                >
-                  <slot
-                    name="cell"
-                    :field="fields[cid]"
-                    :rid="rid"
-                    :cid="cid"
-                    :item="value[rid]"
-                  >{{value[rid][fields[cid][nameKey]]}}</slot>
-                </td>
-                <td :key="'row-' + rid + '-column-' + cid + '-dummy'" v-else></td>
+              @mousedown.exact="clickedDownCell(rid, cid)"
+              @mousedown.shift.exact.stop="clickedDownCellWithShift(rid, cid)"
+              @dblclick.stop="dblclickedCell(rid, cid)"
+              @mouseenter="enteredMouse(rid, cid)"
+              @mouseup="handleMouseUp()"
+            >
+              <template v-if="fields[cid] && value[rid]">
+                <slot
+                  name="cell"
+                  :field="fields[cid]"
+                  :rid="rid"
+                  :cid="cid"
+                  :item="value[rid]"
+                >{{value[rid][fields[cid][nameKey]]}}</slot>
               </template>
-            </template>
-            <template v-else>
-              <td :colspan="fields.length"></td>
-            </template>
+            </td>
+            <!-- Visible Col -->
+
+            <!-- Virtual Col-->
+            <td
+              v-if="invisibleWorldAppendCol && invisibleWorldAppendCol.w"
+              :style="`width:${invisibleWorldAppendCol.w}px;`"
+            ></td>
+            <!-- Virtual Col-->
           </tr>
+          <!-- Visible Row-->
+
+          <!-- Virtual Row-->
+          <tr
+            v-if="invisibleWorldAppendRow && invisibleWorldAppendRow.h"
+            :style="`height:${invisibleWorldAppendRow.h}px;`"
+          ></tr>
+          <!-- Virtual Row-->
         </tbody>
       </table>
 
@@ -60,7 +118,7 @@
         v-if="cursors.active"
         :data-multi="cursors.multi"
         :data-editmode="isEditMode"
-        :style="`padding:0;transform: translate(${cursors.x}px, ${cursors.y}px);width:${cursors.w}px;height:${cursors.h}px;top:-1px;left:-1px`"
+        :style="`padding:0;transform: translate(${cursors.x}px, ${cursors.y}px);width:${cursors.w + 1}px;height:${cursors.h + 1}px;top:-1px;left:-1px`"
       >
         <div v-show="isEditMode && cursors.active" ref="form" class="form-container">
           <form @submit="submitted">
@@ -157,37 +215,92 @@ export default {
         this.active = false;
       }
     },
-    enteredMouse(e, r, c) {
+    clickedHeaderCellWithShift(c) {
+      const r = this.value.length - 1;
+      this.s.b = {
+        r,
+        c
+      };
+    },
+    clickedHeaderCell(c) {
+      this.isSelecting = true;
+      const rMax = this.value.length - 1;
+      this.s.a = {
+        r: 0,
+        c
+      };
+      this.s.b = {
+        r: rMax,
+        c
+      };
+    },
+    clickedHeaderRowWithShift(r) {
+      const c = this.fields.length - 1;
+      this.s.b = {
+        r,
+        c
+      };
+    },
+    clickedHeaderRow(r) {
+      this.isSelecting = true;
+
+      const cMax = this.fields.length - 1;
+      this.s.a = {
+        r,
+        c: 0
+      };
+      this.s.b = {
+        r,
+        c: cMax
+      };
+    },
+    clickedHeaderRoot() {
+      const r = this.value.length - 1;
+      const c = this.fields.length - 1;
+      this.s.a = {
+        r: 0,
+        c: 0
+      };
+      this.s.b = {
+        r,
+        c
+      };
+    },
+    enteredMouse(r, c) {
       if (this.isSelecting) {
         if (!(this.s.b.r == r && this.s.b.c == c)) {
-          const x = e.currentTarget.offsetLeft;
-          const y = e.currentTarget.offsetTop;
-          const w = e.currentTarget.offsetWidth;
-          const h = e.currentTarget.offsetHeight;
-          this.s.b = { r, c, x, y, w, h };
+          this.s.b = { r, c };
         }
       }
     },
     handleMouseUp() {
       this.isSelecting = false;
     },
-    changedUserInput() {
-      console.log("c");
+    scrollCursorIntoView() {
+      this.$refs.cursor.scrollIntoView({
+        behavior: "auto",
+        block: "nearest",
+        inline: "nearest"
+      });
     },
     onKeyDown(e) {
       if (this.active && !this.isEditMode) {
         if (e.key == "ArrowUp") {
           e.preventDefault();
           this.moveCursorUp(e.shiftKey);
+          this.scrollCursorIntoView();
         } else if (e.key == "ArrowRight") {
           e.preventDefault();
           this.moveCursorRight(e.shiftKey);
+          this.scrollCursorIntoView();
         } else if (e.key == "ArrowDown") {
           e.preventDefault();
           this.moveCursorDown(e.shiftKey);
+          this.scrollCursorIntoView();
         } else if (e.key == "ArrowLeft") {
           e.preventDefault();
           this.moveCursorLeft(e.shiftKey);
+          this.scrollCursorIntoView();
         } else if (e.key == "Enter") {
           if (this.s.a.r != null && this.s.a.c != null) {
             e.preventDefault();
@@ -284,8 +397,7 @@ export default {
 
       const r = rToBe > rMax ? rMax : rToBe;
       const c = cToBe > cMax ? cMax : cToBe;
-      const { x, y, w, h } = this.getPositions(r, c);
-      this.s.b = { r, c, x, y, w, h };
+      this.s.b = { r, c };
     },
     submitted(e) {
       e.preventDefault();
@@ -302,9 +414,8 @@ export default {
           r = this.value.length - 1;
           c = c - 1;
         }
-        const { x, y, w, h } = this.getPositions(r, c);
-        if (!shiftKey) this.s.a = { r, c, x, y, w, h };
-        this.s.b = { r, c, x, y, w, h };
+        if (!shiftKey) this.s.a = { r, c };
+        this.s.b = { r, c };
       }
     },
     moveCursorLeft(shiftKey) {
@@ -318,10 +429,9 @@ export default {
           r = r - 1;
           c = this.fields.length - 1;
         }
-        const { x, y, w, h } = this.getPositions(r, c);
 
-        if (!shiftKey) this.s.a = { r, c, x, y, w, h };
-        this.s.b = { r, c, x, y, w, h };
+        if (!shiftKey) this.s.a = { r, c };
+        this.s.b = { r, c };
       }
     },
     moveCursorDown(shiftKey) {
@@ -335,10 +445,9 @@ export default {
           r = 0;
           c = c + 1;
         }
-        const { x, y, w, h } = this.getPositions(r, c);
 
-        if (!shiftKey) this.s.a = { r, c, x, y, w, h };
-        this.s.b = { r, c, x, y, w, h };
+        if (!shiftKey) this.s.a = { r, c };
+        this.s.b = { r, c };
       }
     },
     moveCursorRight(shiftKey) {
@@ -352,10 +461,9 @@ export default {
           r = r + 1;
           c = 0;
         }
-        const { x, y, w, h } = this.getPositions(r, c);
 
-        if (!shiftKey) this.s.a = { r, c, x, y, w, h };
-        this.s.b = { r, c, x, y, w, h };
+        if (!shiftKey) this.s.a = { r, c };
+        this.s.b = { r, c };
       }
     },
     dblclickedCell(r, c) {
@@ -378,81 +486,148 @@ export default {
       }
     },
     getPositions(r, c) {
-      const ref = this.$refs["td-" + r + "-" + c];
-      const column = ref && ref.length > 0 ? ref[0] : ref;
-      const x = column.offsetLeft;
-      const y = column.offsetTop;
-      const w = column.offsetWidth;
-      const h = column.offsetHeight;
+      const x = 50 + c * 150;
+      const y = 27 + r * 27;
+      const w = 150;
+      const h = 27;
       return { x, y, w, h };
     },
-    clickedDownCellWithShift(e, r, c) {
-      const x = e.currentTarget.offsetLeft;
-      const y = e.currentTarget.offsetTop;
-      const w = e.currentTarget.offsetWidth;
-      const h = e.currentTarget.offsetHeight;
-      this.$set(this.s, "b", { r, c, x, y, w, h });
+    clickedDownCellWithShift(r, c) {
+      this.$set(this.s, "b", { r, c });
     },
-    clickedDownCell(e, r, c) {
+    clickedDownCell(r, c) {
       if (!this.active) {
         this.active = true;
       }
       this.isSelecting = true;
 
-      const x = e.currentTarget.offsetLeft;
-      const y = e.currentTarget.offsetTop;
-      const w = e.currentTarget.offsetWidth;
-      const h = e.currentTarget.offsetHeight;
-
       if (this.isEditMode && !(this.s.a.r == r && this.s.a.c == c)) {
         this.$nextTick(() => {
           this.isEditMode = false;
-          this.$set(this.s, "a", { r, c, x, y, w, h });
+          this.$set(this.s, "a", { r, c });
           this.$set(this.s, "b", {
             r: null,
-            c: null,
-            x: null,
-            y: null,
-            w: null,
-            h: null
+            c: null
           });
         });
       } else {
-        this.$set(this.s, "a", { r, c, x, y, w, h });
+        this.$set(this.s, "a", { r, c });
         this.$set(this.s, "b", {
           r: null,
-          c: null,
-          x: null,
-          y: null,
-          w: null,
-          h: null
+          c: null
         });
       }
     },
 
     handleScroll(e) {
+      window.clearTimeout(this.delayTimeout);
       this.scrolling = true;
-      const xx = e.target.scrollWidth;
-      const yy = e.target.scrollHeight;
       const x1 = e.target.scrollLeft;
       const y1 = e.target.scrollTop;
       const x2 = x1 + e.target.clientWidth;
       const y2 = y1 + e.target.clientHeight;
-      window.clearTimeout(this.delayTimeout);
-      this.delayTimeout = setTimeout(() => {
-        this.$set(this, "world", { xx, yy, x1, y1, x2, y2 });
-      }, DELAY);
+      this.$set(this, "world", { x1, y1, x2, y2 });
+      this.delayTimeout = window.setTimeout(() => {
+        this.scrolling = false;
+      }, 800);
     },
     scrollToTop() {
-      this.$refs.wr.scrollTo(0, 0);
+      if (this.$refs && this.$refs.wr) {
+        this.$refs.wr.scrollTo(0, 0);
+      }
     }
   },
   computed: {
+    isSelectedAll() {
+      return this.isSelectedAllRow && this.isSelectedAllCol;
+    },
+    isSelectedAllRow() {
+      if (this.cursors) {
+        const rMax = this.value.length - 1;
+        const cu = this.cursors;
+        return cu.r1 == 0 && cu.r2 == rMax;
+      }
+      return false;
+    },
+    isSelectedAllCol() {
+      if (this.cursors) {
+        const cMax = this.fields.length - 1;
+        const cu = this.cursors;
+        return cu.c1 == 0 && cu.c2 == cMax;
+      }
+      return false;
+    },
+    visibleWorldRow() {
+      if (this.worldRows && this.value) {
+        return [...Array(this.worldRows.r2 - this.worldRows.r1).keys()].map(
+          i => i + this.worldRows.r1
+        );
+      }
+      return [];
+    },
+    invisibleWorldPrependRow() {
+      if (this.worldRows && this.worldRows.r1 > 0) {
+        const h = 27 * this.worldRows.r1;
+        return {
+          h
+        };
+      }
+      return null;
+    },
+    invisibleWorldAppendRow() {
+      if (
+        this.worldRows &&
+        this.value &&
+        this.worldRows.r2 < this.value.length
+      ) {
+        const h = 27 * (this.value.length - this.worldRows.r2);
+        return {
+          h
+        };
+      }
+      return null;
+    },
+    visibleWorldCol() {
+      if (this.worldCols && this.value) {
+        return [...Array(this.worldCols.c2 - this.worldCols.c1).keys()].map(
+          i => i + this.worldCols.c1
+        );
+      }
+      return [];
+    },
+    invisibleWorldPrependCol() {
+      if (this.worldCols && this.worldCols.c1 > 0) {
+        const w = 150 * this.worldCols.c1;
+        return {
+          w
+        };
+      }
+      return null;
+    },
+    invisibleWorldAppendCol() {
+      if (
+        this.worldCols &&
+        this.value &&
+        this.worldCols.c2 < this.fields.length
+      ) {
+        const w = 150 * (this.fields.length - this.worldCols.c2);
+        return {
+          w
+        };
+      }
+      return null;
+    },
     worldRows() {
-      if (this.world) {
-        const length = this.value.length;
-        const r1 = (length * this.world.y1) / this.world.yy;
-        const r2 = (length * this.world.y2) / this.world.yy;
+      if (this.world && this.value) {
+        let r1t = Math.floor(this.world.y1 / 27);
+        let r2t = Math.ceil(this.world.y2 / 27);
+        if (this.scrolling) {
+          r1t -= 3;
+          r2t += 3;
+        }
+        const r2m = this.value.length;
+        const r1 = r1t > 0 ? r1t : 0;
+        const r2 = r2t < r2m ? r2t : r2m;
 
         return { r1, r2 };
       }
@@ -463,9 +638,10 @@ export default {
     },
     worldCols() {
       if (this.world) {
-        const length = this.fields.length;
-        const c1 = (length * this.world.x1) / this.world.xx;
-        const c2 = (length * this.world.x2) / this.world.xx;
+        const c1 = Math.floor((this.world.x1 - 0) / 150);
+        const c2t = Math.ceil((this.world.x2 - 0) / 150);
+        const c2m = this.fields.length;
+        const c2 = c2t < c2m ? c2t : c2m;
         return { c1, c2 };
       }
       return {
@@ -480,29 +656,30 @@ export default {
         this.s.b.r != null &&
         this.s.b.c != null
       ) {
-        const a = this.s.a;
-        const b = this.s.b;
+        const a = this.getPositions(this.s.a.r, this.s.a.c);
+        const b = this.getPositions(this.s.b.r, this.s.b.c);
         const xw = calcMaxMix(a.x, a.w, b.x, b.w);
         const yh = calcMaxMix(a.y, a.h, b.y, b.h);
         const x = xw.min;
         const w = xw.max - x;
         const y = yh.min;
         const h = yh.max - y;
-        const r1 = Math.min(a.r, b.r);
-        const r2 = Math.max(a.r, b.r);
-        const c1 = Math.min(a.c, b.c);
-        const c2 = Math.max(a.c, b.c);
-        return { active: true, multi: true, x, y, w, h, r1, r2, c1, c2 };
+        const r1 = Math.min(this.s.a.r, this.s.b.r);
+        const r2 = Math.max(this.s.a.r, this.s.b.r);
+        const c1 = Math.min(this.s.a.c, this.s.b.c);
+        const c2 = Math.max(this.s.a.c, this.s.b.c);
+        const multi = r1 == r2 && c1 == c2 ? false : true;
+        return { active: true, multi, x, y, w, h, r1, r2, c1, c2 };
       } else if (this.s.a.r != null && this.s.a.c != null) {
-        const a = this.s.a;
+        const a = this.getPositions(this.s.a.r, this.s.a.c);
         const x = a.x;
         const w = a.w;
         const y = a.y;
         const h = a.h;
-        const r1 = a.r;
-        const r2 = a.r;
-        const c1 = a.c;
-        const c2 = a.c;
+        const r1 = this.s.a.r;
+        const r2 = this.s.a.r;
+        const c1 = this.s.a.c;
+        const c2 = this.s.a.c;
         return { active: true, multi: false, x, y, w, h, r1, r2, c1, c2 };
       }
       return { active: false };
@@ -570,22 +747,25 @@ export default {
       this.$set(this, "world", null);
       this.scrollToTop();
       this.$nextTick(() => {
-        const xx = this.$refs.wr.scrollWidth;
-        const yy = this.$refs.wr.scrollHeight;
         const x1 = this.$refs.wr.scrollLeft;
         const y1 = this.$refs.wr.scrollTop;
         const x2 = x1 + this.$refs.wr.clientWidth;
         const y2 = y1 + this.$refs.wr.clientHeight;
-        this.$set(this, "world", { xx, yy, x1, y1, x2, y2 });
+        this.$set(this, "world", { x1, y1, x2, y2 });
       });
     }
   }
 };
 </script>
 <style scoped lang="stylus">
+.guspread-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
 .guspread-wrapper {
   width: 100%;
   height: 100%;
+  max-height: 100vh;
   overflow: scroll;
 
   .guspread-container {
@@ -597,45 +777,42 @@ export default {
     table-layout: fixed;
     width: 100%;
 
-    thead th, th:first-child {
-      width: 50px;
-      text-align: center;
-      background-color: #F5F5F5;
-    }
+    thead {
+      th {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        font-size: 12px;
+        font-weight: bold;
+        text-align: center;
+        width: 150px;
+      }
 
-    thead th {
-      position: -webkit-sticky;
-      position: sticky;
-      border-top: 0.1px solid #ddd;
-      top: 0;
-      z-index: 1;
-      padding: 4px;
-      font-size: 12px;
-      font-weight: bold;
-      text-align: center;
+      th:first-child {
+        width: 50px;
+        text-align: center;
+        z-index: 4;
+      }
     }
 
     th:first-child {
       position: -webkit-sticky;
       position: sticky;
       left: 0;
-      border-left: 0.1px solid #ddd;
-    }
-
-    thead th:first-child {
-      z-index: 2;
     }
 
     tr {
+      th {
+        background-color: #F5F5F5;
+      }
+
       th, td {
         height: 27px;
         padding: 0;
-        width: 150px;
         white-space: nowrap;
         overflow: hidden;
         font-size: 12px;
-        border-bottom: 0.1px solid #ddd;
-        border-right: 0.1px solid #ddd;
         -moz-user-select: none;
         -webkit-user-select: none;
         -ms-user-select: none;
@@ -647,9 +824,88 @@ export default {
       color: #000;
     }
 
-    tbody tr td {
-      text-align: left;
-      padding: 0 2px;
+    th[data-selectleft=true]::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-right: 1px solid #E0E0E0;
+    }
+
+    th[data-selectabove=true]::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-bottom: 1px solid #E0E0E0;
+    }
+
+    tbody tr {
+      th {
+        width: 50px;
+        z-index: 2;
+      }
+
+      td {
+        width: 146px;
+        text-align: left;
+        padding: 0 2px;
+        position: relative;
+      }
+
+      td::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-bottom: 1px solid #eaeaea;
+        border-right: 1px solid #eaeaea;
+        /*
+        bottom: -100%;
+        border-bottom: 1px solid #ccc;
+        transform: scaleY(0.5);
+        transform-origin: 100% 0;
+        */
+      }
+
+      td::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        /*
+        right: -100%;
+        bottom: 0;
+        border-right: 1px solid #ccc;
+        transform: scaleX(0.5);
+        transform-origin: 0 100%;
+        */
+      }
+    }
+  }
+
+  .guspread-table[data-selectedall=true] tr th, .guspread-table[data-selectedallrow=true] thead tr th[data-select=true], .guspread-table[data-selectedallcol=true] tbody tr th[data-select=true] {
+    background-color: #666;
+    color: #fff;
+  }
+
+  .guspread-table[data-selectedallrow=true] {
+    th[data-selectleft=true]::before {
+      border-color: #666;
+    }
+  }
+
+  .guspread-table[data-selectedallcol=true] {
+    th[data-selectabove=true]::before {
+      border-color: #666;
     }
   }
 
@@ -660,7 +916,7 @@ export default {
   .form-container {
     width: calc(100% - 5px);
     padding: 0 2px;
-    
+
     input, form {
       margin: 0;
       padding: 0;
@@ -681,7 +937,11 @@ export default {
 
   .cursor {
     padding: 2px;
-    z-index: 3;
+    z-index: 1;
+    position: absolute;
+    pointer-events: none;
+    transition: box-shadow 0.1s ease-out;
+    caret-color: #41b883;
 
     input, select {
       pointer-events: all;
@@ -698,18 +958,31 @@ export default {
     }
   }
 
-  .cursor {
+  .cursor::before {
+    content: '';
     position: absolute;
-    border: 1.5px solid #448AFF;
-    pointer-events: none;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 2px solid #41b883;
+    transition: all 0.1s ease-out;
   }
 
   .cursor[data-editmode=true] {
-    border-color: #FFC400;
+    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.14);
+
+    &::before {
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      /* border: 2px solid #e48c24; */
+    }
   }
 
   .cursor[data-multi=true] {
-    background-color: rgba(64, 196, 255, 0.06);
+    background-color: rgba(84, 165, 129, 0.06);
   }
 
   .header-boundary {

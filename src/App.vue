@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <div style="width: 100%; height:600px;">
+    <div style="width: 100%;">
       <v-guspread v-model="dataset" :fields="fields"></v-guspread>
     </div>
   </div>
@@ -12,20 +12,30 @@ import VGuspread from "./components/VueGuspread.vue";
 export default {
   name: "App",
   data: () => ({
-    fields: [
-      { name: "c1", label: "A" },
-      { name: "c2", label: "B" },
-      { name: "c3", label: "C" }
-    ],
-    dataset: [
-      { c1: "blue", c2: "banana", c3: "sky" },
-      { c1: "red", c2: "apple", c3: "river" },
-      { c1: "orange", c2: "orange", c3: "mountain" },
-      { c1: "white", c2: "rasberry", c3: "lake" }
-    ]
+    fields: [],
+    dataset: []
   }),
   components: {
     VGuspread
+  },
+  mounted() {
+    let fields = [];
+    for (var i = 1; i < 20; i++) {
+      fields.push({
+        name: "c" + i,
+        label: "c" + i
+      });
+    }
+    let dataset = [];
+    for (var i = 0; i < 2000; i++) {
+      let obj = {};
+      fields.forEach((field, idx) => {
+        obj[field.name] = "test" + idx;
+      });
+      dataset.push(obj);
+    }
+    this.fields = fields;
+    this.dataset = dataset;
   }
 };
 </script>
