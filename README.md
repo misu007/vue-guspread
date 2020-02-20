@@ -221,12 +221,12 @@ export default {
     <tr>
       <td>field</td>
       <td>{"field": Object}</td>
-      <td></td>        
+      <td>"field": Each field Object given as "fields" prop</td>        
     </tr>
     <tr>
       <td>cell</td>
       <td>{"field": Object, "item": Object, "rid": Number, "cid": Number}</td>
-      <td></td>        
+      <td>"item": Each row Object given as "value(v-model)" prop</td>        
     </tr>
     <tr>
       <td>input</td>
@@ -244,12 +244,11 @@ export default {
       v-model="dataset"
       :fields="fields"
       nameKey="apiName"
-      labelKey="label"
       :cellClass="cellClass"
       :cellReadonly="cellReadonly"
     >
       <!-- Each Field -->
-      <template #field="{field}">{{field[showField]}}</template>
+      <template #field="{field}">{{field.label}}</template>
       <!-- Each Field -->
 
       <!-- Each Cell -->
@@ -315,29 +314,21 @@ export default {
     cellClass: ({ field }) => {
       let ret = [];
       if (field.dataType == "Boolean" || field.dataType == "Int") {
-        ret.push("text-align");
-      }
-      if (!field.updateable) {
-        ret.push("is-readonly");
+        ret.push("text-align-right");
       }
       return ret;
     },
     cellReadonly: ({ field }) => {
       return !field.updateable;
-    },
-    showField: "label"
+    }
   })
 };
 </script>
 
 <style lang="stylus">
 .guspread-table {
-  .guspread-table-cell.text-align {
+  .guspread-table-cell.text-align-right {
     text-align: right;
-  }
-
-  .guspread-table-cell.is-readonly {
-    background-color: rgba(255, 0, 0, 0.1);
   }
 }
 </style>
