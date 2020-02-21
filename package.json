@@ -26,6 +26,7 @@
   "unpkg": "dist/vue-guspread.umd.min.js",
   "jsdelivr": "dist/vue-guspread.umd.min.js",
   "dependencies": {
+    "papaparse": "^5.1.1",
     "vue": "^2.6.11"
   },
   "peerDependencies": {

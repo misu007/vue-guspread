@@ -1,6 +1,11 @@
 <template>
   <div class="guspread-wrapper" ref="wr">
-    <div class="guspread-container" :data-inactive="!active" ref="inner">
+    <div
+      class="guspread-container"
+      :style="`--brand-color:${color}`"
+      :data-inactive="!active"
+      ref="inner"
+    >
       <table
         class="guspread-table"
         :data-selectedallcol="isSelectedAllCol"
@@ -9,7 +14,7 @@
       >
         <thead>
           <tr>
-            <th @click.stop="clickedHeaderRoot"></th>
+            <th @click="clickedHeaderRoot"></th>
 
             <th
               v-if="invisibleWorldPrependCol && invisibleWorldPrependCol.w"
@@ -26,7 +31,7 @@
               @mouseenter="enteredMouse((value.length - 1), cid)"
               @mouseup="handleMouseUp()"
             >
-              <template v-if="fields[cid]">
+              <template v-if="fields[cid] && fields[cid][labelKey]">
                 <slot name="field" :field="fields[cid]">{{fields[cid][labelKey]}}</slot>
               </template>
             </th>
@@ -89,7 +94,9 @@
               @mouseenter="enteredMouse(rid, cid)"
               @mouseup="handleMouseUp()"
             >
-              <template v-if="fields[cid] && value[rid]">
+              <template
+                v-if="fields[cid] && fields[cid][nameKey] && value[rid] && value[rid][fields[cid][nameKey]]"
+              >
                 <slot
                   name="cell"
                   :field="fields[cid]"
@@ -120,14 +127,14 @@
       </table>
 
       <div
-        class="cursor"
+        :class="`cursor ${cs.class}`"
         ref="cursor"
         v-if="cursors.active"
         :data-multi="cursors.multi"
         :data-editmode="isEditMode"
         :style="`padding:0;transform: translate(${cursors.x}px, ${cursors.y}px);width:${cursors.w + 1}px;height:${cursors.h + 1}px;top:-1px;left:-1px`"
       >
-        <div v-show="isEditMode && cursors.active" ref="form" class="form-container">
+        <div v-if="isEditMode && cursors.active" ref="form" class="form-container">
           <form @submit="submitted">
             <slot name="input" :field="selectedField" :item="value[s.a.r]">
               <input type="text" v-model="value[s.a.r][selectedField[nameKey]]" />
@@ -145,12 +152,17 @@
 </template>
 
 <script>
+import Papa from "papaparse";
 const calcMaxMix = (n1, d1, n2, d2) => {
   const max = Math.max(n1, n1 + d1, n2, n2 + d2);
   const min = Math.min(n1, n1 + d1, n2, n2 + d2);
   return { max, min };
 };
 const DELAY = 50;
+const defaultCell = {
+  w: 150,
+  h: 27
+};
 export default {
   props: {
     value: {
@@ -160,6 +172,10 @@ export default {
     fields: {
       type: Array,
       default: []
+    },
+    color: {
+      type: String,
+      default: "#41b883"
     },
     nameKey: {
       type: String,
@@ -200,7 +216,11 @@ export default {
     c: null,
     world: null,
     scrolling: false,
-    delayTimeout: null
+    delayTimeout: null,
+    cs: {
+      class: "",
+      delayTimeout: null
+    }
   }),
   methods: {
     clicked(e) {
@@ -216,6 +236,7 @@ export default {
       };
     },
     clickedHeaderCell(c) {
+      this.active = true;
       this.isSelecting = true;
       const rMax = this.value.length - 1;
       this.s.a = {
@@ -235,8 +256,8 @@ export default {
       };
     },
     clickedHeaderRow(r) {
+      this.active = true;
       this.isSelecting = true;
-
       const cMax = this.fields.length - 1;
       this.s.a = {
         r,
@@ -248,6 +269,7 @@ export default {
       };
     },
     clickedHeaderRoot() {
+      this.active = true;
       const r = this.value.length - 1;
       const c = this.fields.length - 1;
       this.s.a = {
@@ -316,7 +338,6 @@ export default {
           .then(result => {
             if (result.state == "granted" || result.state == "prompt") {
               const { r1, r2, c1, c2 } = target;
-
               const targetFields = this.fields
                 .filter((_c, cid) => {
                   return cid >= c1 && cid <= c2;
@@ -324,7 +345,7 @@ export default {
                 .map(field => {
                   return field[this.nameKey];
                 });
-              const datasetText = this.value
+              const arr = this.value
                 .filter((row, rid) => {
                   return rid >= r1 && rid <= r2;
                 })
@@ -335,11 +356,14 @@ export default {
                     })
                     .map(field => {
                       return obj[field];
-                    })
-                    .join("\t");
+                    });
+                });
+              navigator.clipboard.writeText(
+                Papa.unparse(arr, {
+                  dynamicTyping: true,
+                  delimiter: "\t"
                 })
-                .join("\n");
-              navigator.clipboard.writeText(datasetText);
+              );
             }
           });
       }
@@ -348,13 +372,16 @@ export default {
       this.$set(this, "c", null);
       navigator.permissions.query({ name: "clipboard-read" }).then(result => {
         if (result.state == "granted" || result.state == "prompt") {
-          navigator.clipboard.readText().then(rawText => {
-            const rows = rawText.split(/\n/).map(row => {
-              return row.split(/\t/);
+          navigator.clipboard.readText().then(tsv => {
+            const rows = Papa.parse(tsv, {
+              dynamicTyping: true,
+              delimiter: "\t"
             });
-            const r = this.s.a.r;
-            const c = this.s.a.c;
-            this.doReplaceData({ r, c }, rows);
+            if (rows && rows.data && rows.data.length > 0) {
+              const r = this.s.a.r;
+              const c = this.s.a.c;
+              this.doReplaceData({ r, c }, rows.data);
+            }
           });
         }
       });
@@ -478,14 +505,18 @@ export default {
       if (!isReadonly) {
         this.isEditMode = true;
       } else {
-        alert("This field can't be changed");
+        window.clearTimeout(this.cs.delayTimeout);
+        this.cs.class = "cursor-shake";
+        this.cs.delayTimeout = window.setTimeout(() => {
+          this.cs.class = "";
+        }, 400);
       }
     },
     getPositions(r, c) {
-      const x = 50 + c * 150;
-      const y = 27 + r * 27;
-      const w = 150;
-      const h = 27;
+      const x = 50 + c * defaultCell.w;
+      const y = defaultCell.h + r * defaultCell.h;
+      const w = defaultCell.w;
+      const h = defaultCell.h;
       return { x, y, w, h };
     },
     clickedDownCellWithShift(r, c) {
@@ -563,7 +594,7 @@ export default {
     },
     invisibleWorldPrependRow() {
       if (this.worldRows && this.worldRows.r1 > 0) {
-        const h = 27 * this.worldRows.r1;
+        const h = defaultCell.h * this.worldRows.r1;
         return {
           h
         };
@@ -576,7 +607,7 @@ export default {
         this.value &&
         this.worldRows.r2 < this.value.length
       ) {
-        const h = 27 * (this.value.length - this.worldRows.r2);
+        const h = defaultCell.h * (this.value.length - this.worldRows.r2);
         return {
           h
         };
@@ -593,7 +624,7 @@ export default {
     },
     invisibleWorldPrependCol() {
       if (this.worldCols && this.worldCols.c1 > 0) {
-        const w = 150 * this.worldCols.c1;
+        const w = defaultCell.w * this.worldCols.c1;
         return {
           w
         };
@@ -606,7 +637,7 @@ export default {
         this.value &&
         this.worldCols.c2 < this.fields.length
       ) {
-        const w = 150 * (this.fields.length - this.worldCols.c2);
+        const w = defaultCell.w * (this.fields.length - this.worldCols.c2);
         return {
           w
         };
@@ -615,11 +646,11 @@ export default {
     },
     worldRows() {
       if (this.world && this.value) {
-        let r1t = Math.floor(this.world.y1 / 27);
-        let r2t = Math.ceil(this.world.y2 / 27);
+        let r1t = Math.floor(this.world.y1 / defaultCell.h);
+        let r2t = Math.ceil(this.world.y2 / defaultCell.h);
         if (this.scrolling) {
-          r1t -= 3;
-          r2t += 3;
+          r1t -= 5;
+          r2t += 5;
         }
         const r2m = this.value.length;
         const r1 = r1t > 0 ? r1t : 0;
@@ -629,20 +660,20 @@ export default {
       }
       return {
         r1: 0,
-        r2: 10
+        r2: 0
       };
     },
     worldCols() {
       if (this.world) {
-        const c1 = Math.floor((this.world.x1 - 0) / 150);
-        const c2t = Math.ceil((this.world.x2 - 0) / 150);
+        const c1 = Math.floor((this.world.x1 - 0) / defaultCell.w);
+        const c2t = Math.ceil((this.world.x2 - 0) / defaultCell.w);
         const c2m = this.fields.length;
         const c2 = c2t < c2m ? c2t : c2m;
         return { c1, c2 };
       }
       return {
         c1: 0,
-        c2: 10
+        c2: 0
       };
     },
     cursors() {
@@ -707,7 +738,7 @@ export default {
     window.addEventListener("keydown", this.onKeyDown);
     window.addEventListener("click", this.clicked);
     this.widths = this.fields.map(() => {
-      return 150;
+      return defaultCell.w;
     });
     this.$nextTick(() => {
       this.$refs.wr.addEventListener("scroll", this.handleScroll);
@@ -735,7 +766,7 @@ export default {
         this.$set(this.s, "a", { r: null, c: null });
         this.$set(this.s, "b", { r: null, c: null });
         this.widths = this.fields.map(() => {
-          return 150;
+          return defaultCell.w;
         });
       }
     },
@@ -754,6 +785,28 @@ export default {
 };
 </script>
 <style scoped lang="stylus">
+@keyframes shake {
+  0% {
+    transform: translateX(-1px) rotate(0);
+  }
+
+  25% {
+    transform: translateX(2px) rotate(0.2deg);
+  }
+
+  50% {
+    transform: translateX(-2px) rotate(-0.3deg);
+  }
+
+  75% {
+    transform: translateX(2px) rotate(0.2deg);
+  }
+
+  100% {
+    transform: translateX(-1px) rotate(0);
+  }
+}
+
 .guspread-wrapper {
   width: 100%;
   height: 100%;
@@ -865,12 +918,6 @@ export default {
           bottom: 0;
           border-bottom: 1px solid #eaeaea;
           border-right: 1px solid #eaeaea;
-          /*
-          bottom: -100%;
-          border-bottom: 1px solid #ccc;
-          transform: scaleY(0.5);
-          transform-origin: 100% 0;
-          */
         }
 
         &::after {
@@ -880,13 +927,6 @@ export default {
           left: 0;
           right: 0;
           bottom: 0;
-          /*
-          right: -100%;
-          bottom: 0;
-          border-right: 1px solid #ccc;
-          transform: scaleX(0.5);
-          transform-origin: 0 100%;
-          */
         }
 
         &[data-readonly=true] {
@@ -937,13 +977,21 @@ export default {
   }
 
   .cursor {
+    transform-origin: center;
     padding: 2px;
     z-index: 1;
     position: absolute;
     pointer-events: none;
-    caret-color: #41b883;
+    caret-color: var(--brand-color);
     transition: box-shadow 0.2s ease;
     box-shadow: 0px 0px 12px -3px transparent;
+
+    &.cursor-shake {
+      &::before {
+        animation: shake 0.2s;
+        animation-iteration-count: infinite;
+      }
+    }
 
     input, select {
       pointer-events: all;
@@ -966,24 +1014,33 @@ export default {
       left: 0;
       right: 0;
       bottom: 0;
-      border: 2px solid #41b883;
+      border: 2px solid var(--brand-color);
       transition: all 0.1s ease;
     }
 
     &[data-editmode=true] {
-      box-shadow: 0px 0px 12px -3px #41b883;
+      box-shadow: 0px 0px 12px -3px var(--brand-color);
 
       &::before {
         top: -1px;
         left: -1px;
         right: -1px;
         bottom: -1px;
-        border: 1px solid #41b883;
+        border: 1px solid var(--brand-color);
       }
     }
 
     &[data-multi=true] {
-      background-color: rgba(84, 165, 129, 0.08);
+      &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--brand-color);
+        opacity: 0.05;
+      }
     }
   }
 
@@ -1010,7 +1067,7 @@ export default {
       left: 0;
       right: 0;
       bottom: 0;
-      border: 2px dashed #41b883;
+      border: 2px dashed var(--brand-color);
     }
   }
 }

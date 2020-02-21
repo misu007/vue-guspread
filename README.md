@@ -166,6 +166,7 @@ export default {
       <th>Type</th>
       <th>Description</th>
       <th>Default</th>
+      <th>Required</th>
     </tr>
   </thead>
   <tbody>
@@ -173,37 +174,50 @@ export default {
       <td>value (v-model)</td>
       <td>Array</td>
       <td>An array of row item objects</td>
-      <td>[]</td>        
+      <td>[]</td>  
+      <td>*</td>      
     </tr>
     <tr>
       <td>fields</td>
       <td>Array</td>
       <td>An array of column objects that each describe a header</td>
-      <td>[]</td>        
+      <td>[]</td>
+      <td>*</td>        
+    </tr>
+    <tr>
+      <td>color</td>
+      <td>String</td>
+      <td>Apply css color ('#ffffff' or rgb(65, 184, 131)) to the main controled color.</td>
+      <td>'#41b883'</td>
+      <td></td>         
     </tr>
     <tr>
       <td>nameKey</td>
       <td>String</td>
       <td>The value of this property represents the field key of each items</td>
-      <td>'name'</td>        
+      <td>'name'</td>
+      <td></td>     
     </tr>
     <tr>
       <td>labelKey</td>
       <td>String</td>
       <td>The value of this property represents the default label of each fields</td>
-      <td>'label'</td>        
+      <td>'label'</td>
+      <td></td>        
     </tr>
     <tr>
       <td>cellClass</td>
       <td>Function</td>
       <td>You can optionaly customize the classname for each cells</td>
-      <td>null</td>        
+      <td>null</td>
+      <td></td>       
     </tr>
     <tr>
       <td>cellReadonly</td>
       <td>Function</td>
       <td>You can optionaly apply readonly behavior for each cells</td>
-      <td>null</td>        
+      <td>null</td>
+      <td></td>      
     </tr>
   </tbody>
  </table>
