@@ -1,15 +1,36 @@
 language: node_js
+branches:
+  only:
+  - "/^v?[0-9\\.]+/"
 node_js:
 - '12.16'
 install:
 - npm install
-script:
-- npm run build:npm
+script: |-
+  npm run build:npm
+before_deploy: |-
+  export TAG=$(git tag -l --sort=-v:refname | head -n 1)
+  range=$(git tag -l --sort=-v:refname| head -n 2 | tail -n 1)..$(git tag -l --sort=-v:refname| head -n 1)
+  log=$(git log $range --oneline | tail -n +2)
+  export BODY=$'**Changes**<br/>'${log//$'\n'/<br/>}
 deploy:
-  provider: npm
-  edge: true
-  email: $NPM_EMAIL
-  api_key: $NPM_AUTH_TOKEN
-  on:
-    tags: true
-  skip_cleanup: true
+  - provider: npm
+    edge: true
+    email: $NPM_EMAIL
+    api_key: $NPM_AUTH_TOKEN
+    on:
+      tags: true
+    skip_cleanup: true
+  - provider: releases
+    edge: true
+    token: $GITHUB_TOKEN
+    name: Release 
+    tag_name: $TAG
+    body: $BODY
+    file_glob: true
+    file: dist/*
+    skip_cleanup: true
+    on:
+      tags: true
+
+
