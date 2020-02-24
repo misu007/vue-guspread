@@ -239,7 +239,7 @@ export default {
     </tr>
     <tr>
       <td>cell</td>
-      <td>{"field": Object, "item": Object, "rid": Number, "cid": Number}</td>
+      <td>{"field": Object, "item": Object, "row": Number, "col": Number, "value": Any}</td>
       <td>"item": Each row Object given as "value(v-model)" prop</td>        
     </tr>
     <tr>

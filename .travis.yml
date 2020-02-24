@@ -13,6 +13,7 @@ before_deploy: |-
   range=$(git tag -l --sort=-v:refname| head -n 2 | tail -n 1)..$(git tag -l --sort=-v:refname| head -n 1)
   log=$(git log $range --oneline | tail -n +2)
   export BODY=$'**Changes**<br/>'${log//$'\n'/<br/>}
+  zip -j dist/vue-guspread-$TAG.zip dist/vue-guspread.css dist/vue-guspread.umd.js dist/vue-guspread.umd.min.js
 deploy:
   - provider: npm
     edge: true
@@ -24,11 +25,10 @@ deploy:
   - provider: releases
     edge: true
     token: $GITHUB_TOKEN
-    name: Release 
+    name: $TAG
     tag_name: $TAG
     body: $BODY
-    file_glob: true
-    file: dist/*
+    file: dist/vue-guspread-$TAG.zip
     skip_cleanup: true
     on:
       tags: true

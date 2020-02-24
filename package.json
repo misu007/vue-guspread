@@ -11,7 +11,9 @@
     "Excel",
     "Grid",
     "DataTable",
-    "Table"
+    "Table",
+    "Visualforce",
+    "Salesforce"
   ],
   "private": false,
   "files": [
