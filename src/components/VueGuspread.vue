@@ -4,7 +4,7 @@
       class="guspread-container"
       :style="`--brand-color:${color}`"
       :data-inactive="!active"
-      ref="inner"
+      ref="wri"
     >
       <table
         class="guspread-table"
@@ -31,7 +31,7 @@
               @mouseenter="enteredMouse((value.length - 1), cid)"
               @mouseup="handleMouseUp()"
             >
-              <template v-if="fields[cid] && fields[cid][labelKey]">
+              <template v-if="fields[cid] && fields[cid].hasOwnProperty(labelKey)">
                 <slot name="field" :field="fields[cid]">{{fields[cid][labelKey]}}</slot>
               </template>
             </th>
@@ -83,10 +83,10 @@
                     }).join(' '): ''}`"
               :data-readonly="fields[cid] && value[rid] && cellReadonly ? cellReadonly({
                     field: fields[cid], 
-                    item:value[rid], 
-                    row:rid, 
-                    col:cid, 
-                    value:value[rid][fields[cid][nameKey]]
+                    item: value[rid], 
+                    row: rid, 
+                    col: cid, 
+                    value: value[rid][fields[cid][nameKey]]
                     }): false"
               @mousedown.exact="clickedDownCell(rid, cid)"
               @mousedown.shift.exact.stop="clickedDownCellWithShift(rid, cid)"
@@ -95,14 +95,15 @@
               @mouseup="handleMouseUp()"
             >
               <template
-                v-if="fields[cid] && fields[cid][nameKey] && value[rid] && value[rid][fields[cid][nameKey]]"
+                v-if="fields[cid] && fields[cid].hasOwnProperty(nameKey) && value[rid] && value[rid].hasOwnProperty(fields[cid][nameKey])"
               >
                 <slot
                   name="cell"
                   :field="fields[cid]"
-                  :rid="rid"
-                  :cid="cid"
+                  :row="rid"
+                  :col="cid"
                   :item="value[rid]"
+                  :value="value[rid][fields[cid][nameKey]]"
                 >{{value[rid][fields[cid][nameKey]]}}</slot>
               </template>
             </td>
@@ -545,14 +546,14 @@ export default {
         });
       }
     },
-
-    handleScroll(e) {
+    initWorld() {
       window.clearTimeout(this.delayTimeout);
       this.scrolling = true;
-      const x1 = e.target.scrollLeft;
-      const y1 = e.target.scrollTop;
-      const x2 = x1 + e.target.clientWidth;
-      const y2 = y1 + e.target.clientHeight;
+      const t = this.$refs.wr;
+      const x1 = t.scrollLeft;
+      const y1 = t.scrollTop;
+      const x2 = x1 + t.clientWidth;
+      const y2 = y1 + t.clientHeight;
       this.$set(this, "world", { x1, y1, x2, y2 });
       this.delayTimeout = window.setTimeout(() => {
         this.scrolling = false;
@@ -735,19 +736,24 @@ export default {
     }
   },
   created() {
-    window.addEventListener("keydown", this.onKeyDown);
-    window.addEventListener("click", this.clicked);
     this.widths = this.fields.map(() => {
       return defaultCell.w;
     });
     this.$nextTick(() => {
-      this.$refs.wr.addEventListener("scroll", this.handleScroll);
+      this.$refs.wr.addEventListener("scroll", this.initWorld);
     });
   },
-  destroyed() {
+  mounted() {
+    window.addEventListener("keydown", this.onKeyDown);
+    window.addEventListener("click", this.clicked);
+    window.addEventListener("resize", this.initWorld);
+    this.initWorld();
+  },
+  beforeDestroy() {
     window.removeEventListener("keydown", this.onKeyDown);
     window.removeEventListener("click", this.clicked);
-    this.$refs.wr.removeEventListener("scroll", this.handleScroll);
+    window.removeEventListener("resize", this.initWorld);
+    this.$refs.wr.removeEventListener("scroll", this.initWorld);
   },
   watch: {
     isEditMode(val) {
@@ -851,7 +857,7 @@ export default {
 
     tr {
       th {
-        background-color: #F5F5F5;
+        background-color: #f2f2f2;
       }
 
       th, td {
@@ -873,7 +879,7 @@ export default {
     }
 
     th[data-select=true] {
-      background-color: #E0E0E0;
+      background-color: #dadada;
       color: #000;
     }
 
@@ -884,7 +890,7 @@ export default {
       left: 0;
       right: 0;
       bottom: 0;
-      border-right: 1px solid #E0E0E0;
+      border-right: 1px solid #dadada;
     }
 
     th[data-selectabove=true]::before {
@@ -894,7 +900,7 @@ export default {
       left: 0;
       right: 0;
       bottom: 0;
-      border-bottom: 1px solid #E0E0E0;
+      border-bottom: 1px solid #dadada;
     }
 
     tbody tr {
@@ -938,19 +944,19 @@ export default {
   }
 
   .guspread-table[data-selectedall=true] tr th, .guspread-table[data-selectedallrow=true] thead tr th[data-select=true], .guspread-table[data-selectedallcol=true] tbody tr th[data-select=true] {
-    background-color: #666;
+    background-color: #777;
     color: #fff;
   }
 
   .guspread-table[data-selectedallrow=true] {
     th[data-selectleft=true]::before {
-      border-color: #666;
+      border-color: #777;
     }
   }
 
   .guspread-table[data-selectedallcol=true] {
     th[data-selectabove=true]::before {
-      border-color: #666;
+      border-color: #777;
     }
   }
 
