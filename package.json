@@ -20,7 +20,7 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build:npm": "vue-cli-service build --target lib --name vue-guspread src/wrapper.js",
-    "postversion": "git push origin $(git describe --abbrev=0 --tags)"
+    "postversion": "git push --follow-tags origin master"
   },
   "main": "dist/vue-guspread.common.js",
   "unpkg": "dist/vue-guspread.umd.min.js",
