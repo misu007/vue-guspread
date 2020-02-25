@@ -162,62 +162,85 @@ export default {
 <table>
   <thead>
     <tr>
-      <th>Name</th>
+      <th>Required</th>
+      <th>Prop Name</th>
       <th>Type</th>
       <th>Description</th>
       <th>Default</th>
-      <th>Required</th>
     </tr>
   </thead>
   <tbody>
     <tr>
+      <td>*</td>      
       <td>value (v-model)</td>
       <td>Array</td>
       <td>An array of row item objects</td>
       <td>[]</td>  
-      <td>*</td>      
     </tr>
     <tr>
+      <td>*</td>        
       <td>fields</td>
       <td>Array</td>
       <td>An array of column objects that each describe a header</td>
       <td>[]</td>
-      <td>*</td>        
     </tr>
     <tr>
+      <td></td>         
       <td>color</td>
       <td>String</td>
       <td>Apply css color ('#ffffff' or rgb(65, 184, 131)) to the main controled color.</td>
       <td>'#41b883'</td>
-      <td></td>         
     </tr>
     <tr>
+      <td></td>     
       <td>nameKey</td>
       <td>String</td>
       <td>The value of this property represents the field key of each items</td>
       <td>'name'</td>
-      <td></td>     
     </tr>
     <tr>
+      <td></td>        
       <td>labelKey</td>
       <td>String</td>
       <td>The value of this property represents the default label of each fields</td>
       <td>'label'</td>
-      <td></td>        
     </tr>
     <tr>
+      <td></td>       
       <td>cellClass</td>
       <td>Function</td>
       <td>You can optionaly customize the classname for each cells</td>
       <td>null</td>
-      <td></td>       
     </tr>
     <tr>
+      <td></td>      
       <td>cellReadonly</td>
       <td>Function</td>
       <td>You can optionaly apply readonly behavior for each cells</td>
       <td>null</td>
-      <td></td>      
+    </tr>
+  </tbody>
+ </table>
+
+### Events
+<table>
+  <thead>
+    <tr>
+      <th>Event Name</th>
+      <th>Payload</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>changeEditMode</td>
+      <td>True (Edit mode) or False (Show mode)</td>
+      <td>Fired when changed between edit mode and show mode</td>        
+    </tr>
+    <tr>
+      <td>changeFocused</td>
+      <td>{"a": Object, "b": Object}</td>
+      <td>Fired when changed the rect focued cells. Both keys "a" and "b" have row index and col index</td>        
     </tr>
   </tbody>
  </table>
