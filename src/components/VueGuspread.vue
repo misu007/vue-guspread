@@ -757,6 +757,7 @@ export default {
   },
   watch: {
     isEditMode(val) {
+      this.$emit("changeEditMode", val);
       if (val) {
         this.$set(this, "c", null);
         this.$nextTick(() => {
@@ -786,6 +787,14 @@ export default {
         const y2 = y1 + this.$refs.wr.clientHeight;
         this.$set(this, "world", { x1, y1, x2, y2 });
       });
+    },
+    cursors(val) {
+      if (val && val.active) {
+        this.$emit("changeFocused", {
+          a: { row: val.r1, col: val.c1 },
+          b: { row: val.r2, col: val.c2 }
+        });
+      }
     }
   }
 };
