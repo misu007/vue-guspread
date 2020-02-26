@@ -834,10 +834,6 @@ export default {
 
   .guspread-container {
     position: relative;
-
-    &[data-inactive=true] {
-      filter: grayscale(1);
-    }
   }
 
   .guspread-table {
