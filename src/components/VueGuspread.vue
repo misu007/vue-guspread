@@ -900,6 +900,7 @@ export default {
       right: 0;
       bottom: 0;
       border-right: 1px solid #dadada;
+      pointer-events: none;
     }
 
     th[data-selectabove=true]::before {
@@ -910,6 +911,7 @@ export default {
       right: 0;
       bottom: 0;
       border-bottom: 1px solid #dadada;
+      pointer-events: none;
     }
 
     tbody tr {
@@ -933,6 +935,7 @@ export default {
           bottom: 0;
           border-bottom: 1px solid #eaeaea;
           border-right: 1px solid #eaeaea;
+          pointer-events: none;
         }
 
         &::after {
@@ -942,6 +945,7 @@ export default {
           left: 0;
           right: 0;
           bottom: 0;
+          pointer-events: none;
         }
 
         &[data-readonly=true] {
@@ -1031,6 +1035,7 @@ export default {
       bottom: 0;
       border: 2px solid var(--brand-color);
       transition: all 0.1s ease;
+      pointer-events: none;
     }
 
     &[data-editmode=true] {
@@ -1055,6 +1060,7 @@ export default {
         bottom: 0;
         background-color: var(--brand-color);
         opacity: 0.05;
+        pointer-events: none;
       }
     }
   }
@@ -1073,6 +1079,7 @@ export default {
       right: 0;
       bottom: 0;
       border: 2px solid #fff;
+      pointer-events: none;
     }
 
     &::after {
@@ -1083,6 +1090,7 @@ export default {
       right: 0;
       bottom: 0;
       border: 2px dashed var(--brand-color);
+      pointer-events: none;
     }
   }
 }
