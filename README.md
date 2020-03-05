@@ -238,6 +238,11 @@ export default {
       <td>Fired when changed between edit mode and show mode</td>        
     </tr>
     <tr>
+      <td>changeScrolling</td>
+      <td>True (Edit mode) or False (Show mode)</td>
+      <td>Fired on scrolling started or finished</td>        
+    </tr>
+    <tr>
       <td>changeFocused</td>
       <td>{"a": Object, "b": Object}</td>
       <td>Fired when changed the rect focued cells. Both keys "a" and "b" have row index and col index</td>        

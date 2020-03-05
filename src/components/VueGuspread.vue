@@ -507,6 +507,11 @@ export default {
         scrolling = true;
         this.myRequestFrame(evt);
       }
+      this.scrolling = true;
+      window.clearTimeout(this.delayTimeout);
+      this.delayTimeout = window.setTimeout(() => {
+        this.scrolling = false;
+      }, 200);
     },
     myRequestFrame(evt) {
       window.requestAnimationFrame(() => {
@@ -728,6 +733,9 @@ export default {
     window.removeEventListener("resize", this.initWorld);
   },
   watch: {
+    scrolling(val) {
+      this.$emit("changeScrolling", val);
+    },
     isEditMode(val) {
       this.$emit("changeEditMode", val);
       if (val) {
