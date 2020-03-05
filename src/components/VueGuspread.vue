@@ -2,12 +2,12 @@
   <div class="guspread-wrapper" ref="wr">
     <div
       class="guspread-container"
-      :style="`--brand-color:${color}`"
+      :style="`--brand-color:${color};width:${container.w}px;height:${container.h}px`"
       :data-inactive="!active"
-      ref="wri"
     >
       <table
         class="guspread-table"
+        :style="`transform:translate(${worldOffset.w}px,${worldOffset.h}px)`"
         :data-selectedallcol="isSelectedAllCol"
         :data-selectedallrow="isSelectedAllRow"
         :data-selectedall="isSelectedAll"
@@ -15,11 +15,6 @@
         <thead>
           <tr>
             <th @click="clickedHeaderRoot"></th>
-
-            <th
-              v-if="invisibleWorldPrependCol && invisibleWorldPrependCol.w"
-              :style="`width:${invisibleWorldPrependCol.w}px;`"
-            ></th>
 
             <th
               :key="'hd-' + cid"
@@ -35,21 +30,9 @@
                 <slot name="field" :field="fields[cid]">{{fields[cid][labelKey]}}</slot>
               </template>
             </th>
-
-            <th
-              v-if="invisibleWorldAppendCol && invisibleWorldAppendCol.w"
-              :style="`width:${invisibleWorldAppendCol.w}px;`"
-            ></th>
           </tr>
         </thead>
         <tbody>
-          <!-- Virtual Row-->
-          <tr
-            v-if="invisibleWorldPrependRow && invisibleWorldPrependRow.h"
-            :style="`height:${invisibleWorldPrependRow.h}px;`"
-          ></tr>
-          <!-- Virtual Row-->
-
           <!-- Visible Row-->
           <tr :key="'row-' + rid" v-for="rid in visibleWorldRow">
             <!-- #Row -->
@@ -62,13 +45,6 @@
               @mouseup="handleMouseUp()"
             >{{rid + 1}}</th>
             <!-- #Row -->
-
-            <!-- Virtual Col-->
-            <td
-              v-if="invisibleWorldPrependCol && invisibleWorldPrependCol.w"
-              :style="`width:${invisibleWorldPrependCol.w}px;`"
-            ></td>
-            <!-- Virtual Col-->
 
             <!-- Visible Col -->
             <td
@@ -108,22 +84,8 @@
               </template>
             </td>
             <!-- Visible Col -->
-
-            <!-- Virtual Col-->
-            <td
-              v-if="invisibleWorldAppendCol && invisibleWorldAppendCol.w"
-              :style="`width:${invisibleWorldAppendCol.w}px;`"
-            ></td>
-            <!-- Virtual Col-->
           </tr>
           <!-- Visible Row-->
-
-          <!-- Virtual Row-->
-          <tr
-            v-if="invisibleWorldAppendRow && invisibleWorldAppendRow.h"
-            :style="`height:${invisibleWorldAppendRow.h}px;`"
-          ></tr>
-          <!-- Virtual Row-->
         </tbody>
       </table>
 
@@ -138,7 +100,7 @@
         <div v-if="isEditMode && cursors.active" ref="form" class="form-container">
           <form @submit="submitted">
             <slot name="input" :field="selectedField" :item="value[s.a.r]">
-              <input type="text" v-model="value[s.a.r][selectedField[nameKey]]" />
+              <input type="text" v-model.lazy="value[s.a.r][selectedField[nameKey]]" />
             </slot>
           </form>
         </div>
@@ -164,6 +126,7 @@ const defaultCell = {
   w: 150,
   h: 27
 };
+
 export default {
   props: {
     value: {
@@ -221,9 +184,18 @@ export default {
     cs: {
       class: "",
       delayTimeout: null
+    },
+    animating: false,
+    container: {
+      w: 0,
+      h: 0
     }
   }),
   methods: {
+    moveNext(callback) {
+      this.isEditMode = false;
+      this.$nextTick(callback);
+    },
     clicked(e) {
       if (!this.$refs.wr.contains(e.target)) {
         this.active = false;
@@ -428,67 +400,71 @@ export default {
       this.moveCursorDown();
     },
     moveCursorUp(shiftKey) {
-      this.isEditMode = false;
-      const t = shiftKey ? this.s.b : this.s.a;
-      let r = t.r;
-      let c = t.c;
-      if (!(r == 0 && c == 0)) {
-        r--;
-        if (r < 0) {
-          r = this.value.length - 1;
-          c = c - 1;
+      this.moveNext(() => {
+        const t = shiftKey ? this.s.b : this.s.a;
+        let r = t.r;
+        let c = t.c;
+        if (!(r == 0 && c == 0)) {
+          r--;
+          if (r < 0) {
+            r = this.value.length - 1;
+            c = c - 1;
+          }
+          if (!shiftKey) this.s.a = { r, c };
+          this.s.b = { r, c };
         }
-        if (!shiftKey) this.s.a = { r, c };
-        this.s.b = { r, c };
-      }
+      });
     },
     moveCursorLeft(shiftKey) {
-      this.isEditMode = false;
-      const t = shiftKey ? this.s.b : this.s.a;
-      let r = t.r;
-      let c = t.c;
-      if (!(r == 0 && c == 0)) {
-        c--;
-        if (c < 0) {
-          r = r - 1;
-          c = this.fields.length - 1;
-        }
+      this.moveNext(() => {
+        const t = shiftKey ? this.s.b : this.s.a;
+        let r = t.r;
+        let c = t.c;
+        if (!(r == 0 && c == 0)) {
+          c--;
+          if (c < 0) {
+            r = r - 1;
+            c = this.fields.length - 1;
+          }
 
-        if (!shiftKey) this.s.a = { r, c };
-        this.s.b = { r, c };
-      }
+          if (!shiftKey) this.s.a = { r, c };
+          this.s.b = { r, c };
+        }
+      });
     },
     moveCursorDown(shiftKey) {
-      this.isEditMode = false;
-      const t = shiftKey ? this.s.b : this.s.a;
-      let r = t.r;
-      let c = t.c;
-      if (!(r == this.value.length - 1 && c == this.fields.length - 1)) {
-        r++;
-        if (r > this.value.length - 1) {
-          r = 0;
-          c = c + 1;
-        }
+      this.moveNext(() => {
+        const t = shiftKey ? this.s.b : this.s.a;
+        let r = t.r;
+        let c = t.c;
+        if (!(r == this.value.length - 1 && c == this.fields.length - 1)) {
+          r++;
+          if (r > this.value.length - 1) {
+            r = 0;
+            c = c + 1;
+          }
 
-        if (!shiftKey) this.s.a = { r, c };
-        this.s.b = { r, c };
-      }
+          if (!shiftKey) this.s.a = { r, c };
+          this.s.b = { r, c };
+        }
+      });
     },
     moveCursorRight(shiftKey) {
-      this.isEditMode = false;
-      const t = shiftKey ? this.s.b : this.s.a;
-      let r = t.r;
-      let c = t.c;
-      if (!(r == this.value.length - 1 && c == this.fields.length - 1)) {
-        c++;
-        if (c > this.fields.length - 1) {
-          r = r + 1;
-          c = 0;
-        }
+      this.moveNext(() => {
+        const t = shiftKey ? this.s.b : this.s.a;
+        let r = t.r;
+        let c = t.c;
+        if (!(r == this.value.length - 1 && c == this.fields.length - 1)) {
+          c++;
+          if (c > this.fields.length - 1) {
+            r = r + 1;
+            c = 0;
+          }
 
-        if (!shiftKey) this.s.a = { r, c };
-        this.s.b = { r, c };
-      }
+          if (!shiftKey) this.s.a = { r, c };
+          this.s.b = { r, c };
+        }
+      });
     },
     dblclickedCell(r, c) {
       this.changeToEditmode(r, c);
@@ -530,8 +506,7 @@ export default {
       this.isSelecting = true;
 
       if (this.isEditMode && !(this.s.a.r == r && this.s.a.c == c)) {
-        this.$nextTick(() => {
-          this.isEditMode = false;
+        this.moveNext(() => {
           this.$set(this.s, "a", { r, c });
           this.$set(this.s, "b", {
             r: null,
@@ -547,17 +522,18 @@ export default {
       }
     },
     initWorld() {
-      window.clearTimeout(this.delayTimeout);
-      this.scrolling = true;
-      const t = this.$refs.wr;
-      const x1 = t.scrollLeft;
-      const y1 = t.scrollTop;
-      const x2 = x1 + t.clientWidth;
-      const y2 = y1 + t.clientHeight;
-      this.$set(this, "world", { x1, y1, x2, y2 });
-      this.delayTimeout = window.setTimeout(() => {
-        this.scrolling = false;
-      }, 800);
+      if (!this.scrolling) {
+        this.scrolling = true;
+        window.requestAnimationFrame(() => {
+          const t = this.$refs.wr;
+          const x1 = t.scrollLeft;
+          const y1 = t.scrollTop;
+          const x2 = x1 + t.clientWidth;
+          const y2 = y1 + t.clientHeight;
+          this.$set(this, "world", { x1, y1, x2, y2 });
+          this.scrolling = false;
+        });
+      }
     },
     scrollToTop() {
       if (this.$refs && this.$refs.wr) {
@@ -593,28 +569,6 @@ export default {
       }
       return [];
     },
-    invisibleWorldPrependRow() {
-      if (this.worldRows && this.worldRows.r1 > 0) {
-        const h = defaultCell.h * this.worldRows.r1;
-        return {
-          h
-        };
-      }
-      return null;
-    },
-    invisibleWorldAppendRow() {
-      if (
-        this.worldRows &&
-        this.value &&
-        this.worldRows.r2 < this.value.length
-      ) {
-        const h = defaultCell.h * (this.value.length - this.worldRows.r2);
-        return {
-          h
-        };
-      }
-      return null;
-    },
     visibleWorldCol() {
       if (this.worldCols && this.value) {
         return [...Array(this.worldCols.c2 - this.worldCols.c1).keys()].map(
@@ -623,22 +577,20 @@ export default {
       }
       return [];
     },
+    worldOffset() {
+      const w =
+        this.worldCols && this.worldCols.c1 > 0
+          ? defaultCell.w * this.worldCols.c1
+          : 0;
+      const h =
+        this.worldRows && this.worldRows.r1 > 0
+          ? defaultCell.h * this.worldRows.r1
+          : 0;
+      return { w, h };
+    },
     invisibleWorldPrependCol() {
       if (this.worldCols && this.worldCols.c1 > 0) {
         const w = defaultCell.w * this.worldCols.c1;
-        return {
-          w
-        };
-      }
-      return null;
-    },
-    invisibleWorldAppendCol() {
-      if (
-        this.worldCols &&
-        this.value &&
-        this.worldCols.c2 < this.fields.length
-      ) {
-        const w = defaultCell.w * (this.fields.length - this.worldCols.c2);
         return {
           w
         };
@@ -775,12 +727,14 @@ export default {
         this.widths = this.fields.map(() => {
           return defaultCell.w;
         });
+        this.container.w = val.length * 150 + 50;
       }
     },
     value(val) {
       this.$set(this, "world", null);
+      this.container.h = (val.length + 1) * 27;
       this.scrollToTop();
-      this.$nextTick(() => {
+      window.requestAnimationFrame(() => {
         const x1 = this.$refs.wr.scrollLeft;
         const y1 = this.$refs.wr.scrollTop;
         const x2 = x1 + this.$refs.wr.clientWidth;
@@ -840,13 +794,10 @@ export default {
     border-collapse: collapse;
     table-layout: fixed;
     width: fit-content;
+    will-change: transform;
 
     thead {
       th {
-        position: -webkit-sticky;
-        position: sticky;
-        top: 0;
-        z-index: 4;
         font-size: 12px;
         font-weight: bold;
         text-align: center;
@@ -875,12 +826,6 @@ export default {
         -webkit-user-select: none;
         -ms-user-select: none;
       }
-    }
-
-    th:first-child {
-      position: -webkit-sticky;
-      position: sticky;
-      left: 0;
     }
 
     th[data-select=true] {
