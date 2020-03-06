@@ -90,7 +90,7 @@
         :style="`padding:0;transform: translate(${c.x}px, ${c.y}px);width:${c.w + 1}px;height:${c.h + 1}px;top:-1px;left:-1px`"
       ></div>
       <v-guspread-mini-map
-        v-if="!hideMinimap && world"
+        v-if="showMinimap"
         :showing="{r:worldRows,c:worldCols}"
         :whole="{r:itemCount,c:fieldCount}"
         :world="world"
@@ -642,6 +642,14 @@ export default {
     }
   },
   computed: {
+    showMinimap() {
+      return (
+        !this.hideMinimap &&
+        this.world &&
+        !(this.cursors.active && this.cursors.multi) &&
+        !this.isEditMode
+      );
+    },
     isSelectedAll() {
       return this.isSelectedAllRow && this.isSelectedAllCol;
     },
