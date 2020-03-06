@@ -1,19 +1,7 @@
 <template >
   <td
-    :class="`guspread-table-cell${cellClass && field && item ? ' ' + cellClass({
-                    field: field, 
-                    item:item, 
-                    row:row, 
-                    col:col, 
-                    value:value
-                    }).join(' '): ''}`"
-    :data-readonly="cellReadonly && field && item ? cellReadonly({
-                    field: field, 
-                    item: item, 
-                    row: row, 
-                    col: col, 
-                    value: value
-                    }): false"
+    :class="`guspread-table-cell${extraCellClass}`"
+    :data-readonly="dataReadOnly"
     @mousedown.exact="$emit('trmdown')"
     @mousedown.shift.exact.stop="$emit('trmdownshift')"
     @dblclick.stop="$emit('trdblc')"
@@ -71,6 +59,30 @@ export default {
         return item[field[nameKey]];
       }
       return null;
+    },
+    dataReadOnly() {
+      if (this.cellReadonly && this.field && this.item) {
+        return this.cellReadonly({
+          field: this.field,
+          item: this.item,
+          row: this.row,
+          col: this.col,
+          value: this.value
+        });
+      }
+      return false;
+    },
+    extraCellClass() {
+      if (this.cellClass && this.field && this.item) {
+        return this.cellClass({
+          field: this.field,
+          item: this.item,
+          row: this.row,
+          col: this.col,
+          value: this.value
+        }).join(" ");
+      }
+      return "";
     }
   }
 };
