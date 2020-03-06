@@ -689,7 +689,7 @@ export default {
         const c1 = c1t > 0 ? c1t : 0;
         const c2t = c1 + diff + 1;
         const c2m = this.fieldCount;
-        const c2 = c2t < c2m ? c2t : c2m - 1;
+        const c2 = c2t < c2m ? c2t : c2m;
         return { c1, c2 };
       }
       return {
