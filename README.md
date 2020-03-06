@@ -219,6 +219,13 @@ export default {
       <td>You can optionaly apply readonly behavior for each cells</td>
       <td>null</td>
     </tr>
+    <tr>
+      <td></td>      
+      <td>hideMinimap</td>
+      <td>Boolean</td>
+      <td>Hide default mini map</td>
+      <td>false</td>
+    </tr>
   </tbody>
  </table>
 
