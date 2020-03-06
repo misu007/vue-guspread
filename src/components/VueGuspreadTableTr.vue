@@ -1,4 +1,4 @@
-<template>
+<template >
   <tr class="guspread-item-tr">
     <th
       :data-selectabove="cursors.active && (cursors.r1 - 1) == row"
@@ -72,10 +72,7 @@ export default {
       type: Function,
       default: null
     }
-  },
-  data: () => ({}),
-  methods: {},
-  computed: {}
+  }
 };
 </script>
 <style scoped lang="stylus">

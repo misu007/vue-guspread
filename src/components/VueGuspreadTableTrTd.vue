@@ -1,4 +1,4 @@
-<template>
+<template >
   <td
     :class="`guspread-table-cell${cellClass && field && item ? ' ' + cellClass({
                     field: field, 
@@ -58,14 +58,19 @@ export default {
   },
   computed: {
     value() {
+      const field = this.field;
+      const item = this.item;
+      const nameKey = this.nameKey;
       if (
-        this.field &&
-        this.field.hasOwnProperty(this.nameKey) &&
-        this.item &&
-        this.item.hasOwnProperty(this.field[this.nameKey])
+        field &&
+        nameKey &&
+        field.hasOwnProperty(nameKey) &&
+        item &&
+        item.hasOwnProperty(field[nameKey])
       ) {
-        return this.item[this.field[this.nameKey]];
+        return item[field[nameKey]];
       }
+      return null;
     }
   }
 };

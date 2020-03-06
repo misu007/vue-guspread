@@ -29,6 +29,7 @@
         </thead>
         <tbody>
           <!-- Visible Row-->
+
           <template v-for="(rid, ridx) in visibleWorldRow">
             <v-guspread-tr
               :key="`ttr${ridx}`"
@@ -62,6 +63,7 @@
               </template>
             </v-guspread-tr>
           </template>
+
           <!-- Visible Row-->
         </tbody>
       </table>
@@ -113,6 +115,17 @@ let world = {
   h: 0,
   mx: 0,
   my: 0
+};
+
+const optimizeItem = item => {
+  const ret = {};
+  Object.keys(item).forEach(key => {
+    Object.defineProperty(ret, key, {
+      configurable: false,
+      value: item[key]
+    });
+  });
+  return ret;
 };
 
 export default {
@@ -176,7 +189,9 @@ export default {
       delayTimeout: null
     },
     scrolling: false,
-    delayTimeout: null
+    delayTimeout: null,
+    optimizedFields: [],
+    optimizedItems: []
   }),
   methods: {
     moveNext(callback) {
@@ -292,7 +307,7 @@ export default {
           .then(result => {
             if (result.state == "granted" || result.state == "prompt") {
               const { r1, r2, c1, c2 } = target;
-              const targetFields = this.fields
+              const targetoptimizedFields = this.optimizedFields
                 .filter((_c, cid) => {
                   return cid >= c1 && cid <= c2;
                 })
@@ -306,7 +321,7 @@ export default {
                 .map(obj => {
                   return Object.keys(obj)
                     .filter(field => {
-                      return targetFields.indexOf(field) >= 0;
+                      return targetoptimizedFields.indexOf(field) >= 0;
                     })
                     .map(field => {
                       return obj[field];
@@ -359,15 +374,19 @@ export default {
           let val = rows[r - location.r][c - location.c];
           const isReadonly = this.cellReadonly
             ? this.cellReadonly({
-                field: this.fields[c],
+                field: this.optimizedFields[c],
                 item: this.value[r],
                 row: r,
                 col: c,
-                value: this.value[r][this.fields[c][this.nameKey]]
+                value: this.value[r][this.optimizedFields[c][this.nameKey]]
               })
             : false;
           if (!isReadonly) {
-            this.$set(this.value[r], this.fields[c][this.nameKey], val);
+            this.$set(
+              this.value[r],
+              this.optimizedFields[c][this.nameKey],
+              val
+            );
           }
         }
       }
@@ -453,11 +472,11 @@ export default {
     changeToEditmode(r, c) {
       const isReadonly = this.cellReadonly
         ? this.cellReadonly({
-            field: this.fields[c],
+            field: this.optimizedFields[c],
             item: this.value[r],
             row: r,
             col: c,
-            value: this.value[r][this.fields[c][this.nameKey]]
+            value: this.value[r][this.optimizedFields[c][this.nameKey]]
           })
         : false;
       if (!isReadonly) {
@@ -517,10 +536,12 @@ export default {
       window.requestAnimationFrame(() => {
         const deltaX = evt ? evt.deltaX : 0;
         const deltaY = evt ? evt.deltaY : 0;
-        const _x = world.x + deltaX;
-        const _y = world.y + deltaY;
+        const dx = Math.abs(deltaX);
+        const dy = Math.abs(deltaY);
+        const _x = dx > dy ? world.x + deltaX : world.x;
         const x =
           _x < 0 ? 0 : _x > world.mx - world.w ? world.mx - world.w : _x;
+        const _y = dy >= dx ? world.y + deltaY : world.y;
         const y =
           _y < 0 ? 0 : _y > world.my - world.h ? world.my - world.h : _y;
         const x1 = x;
@@ -552,6 +573,24 @@ export default {
       this.$nextTick(() => {
         this.$set(this, "world", { x1, y1, x2, y2 });
       });
+    },
+    optimizeFields() {
+      const fields = this.fields;
+      if (fields) {
+        this.optimizedFields = fields.map(item => {
+          return optimizeItem(item);
+        });
+        world.mx = fields.length * 150 + 200;
+      }
+    },
+    optimizeItems() {
+      const val = this.value;
+      if (val) {
+        this.optimizedItems = val.map(item => {
+          return optimizeItem(item);
+        });
+      }
+      world.my = (val.length + 2) * 27;
     }
   },
   computed: {
@@ -575,7 +614,7 @@ export default {
       return false;
     },
     visibleWorldRow() {
-      if (this.worldRows && this.value) {
+      if (this.worldRows && this.itemCount > 0) {
         if (this.worldRows.r2 - this.worldRows.r1 > 0) {
           return [...Array(this.worldRows.r2 - this.worldRows.r1).keys()].map(
             i => i + this.worldRows.r1
@@ -591,7 +630,7 @@ export default {
       return [];
     },
     visibleWorldCol() {
-      if (this.worldCols && this.value) {
+      if (this.worldCols && this.fieldCount > 0) {
         if (this.worldCols.c2 - this.worldCols.c1 > 0) {
           return [...Array(this.worldCols.c2 - this.worldCols.c1).keys()].map(
             i => i + this.worldCols.c1
@@ -602,7 +641,7 @@ export default {
     },
     thisField() {
       if (this.visibleWorldCol.length > 0) {
-        return this.fields.slice(this.worldCols.c1, this.worldCols.c2);
+        return this.optimizedFields.slice(this.worldCols.c1, this.worldCols.c2);
       }
       return [];
     },
@@ -635,13 +674,14 @@ export default {
     },
     worldCols() {
       if (this.world) {
-        const c1 = Math.floor(this.world.x1 / defaultCell.w);
+        const c1t = Math.floor(this.world.x1 / defaultCell.w);
         const diff = Math.floor(
           (this.world.x2 - this.world.x1) / defaultCell.w
         );
+        const c1 = c1t > 0 ? c1t : 0;
         const c2t = c1 + diff + 1;
         const c2m = this.fieldCount;
-        const c2 = c2t < c2m ? c2t : c2m;
+        const c2 = c2t < c2m ? c2t : c2m - 1;
         return { c1, c2 };
       }
       return {
@@ -650,14 +690,14 @@ export default {
       };
     },
     fieldCount() {
-      if (this.fields) {
-        return this.fields.length;
+      if (this.optimizedFields) {
+        return this.optimizedFields.length;
       }
       return 0;
     },
     itemCount() {
-      if (this.value) {
-        return this.value.length;
+      if (this.optimizedItems) {
+        return this.optimizedItems.length;
       }
       return 0;
     },
@@ -695,7 +735,7 @@ export default {
     },
     selectedField() {
       if (this.s.a.c != null) {
-        return this.fields[this.s.a.c];
+        return this.optimizedFields[this.s.a.c];
       }
       return null;
     },
@@ -717,7 +757,7 @@ export default {
     }
   },
   created() {
-    this.widths = this.fields.map(() => {
+    this.widths = this.optimizedFields.map(() => {
       return defaultCell.w;
     });
   },
@@ -725,6 +765,8 @@ export default {
     window.addEventListener("keydown", this.onKeyDown);
     window.addEventListener("click", this.clicked);
     window.addEventListener("resize", this.initWorld);
+    this.optimizeFields();
+    this.optimizeItems();
     this.initWorld();
   },
   beforeDestroy() {
@@ -750,17 +792,17 @@ export default {
     },
     fields(val) {
       if (val) {
+        this.optimizeFields();
         this.$set(this.s, "a", { r: null, c: null });
         this.$set(this.s, "b", { r: null, c: null });
-        this.widths = this.fields.map(() => {
+        this.widths = this.optimizedFields.map(() => {
           return defaultCell.w;
         });
-        world.mx = val.length * 150 + 200;
       }
     },
     value(val) {
+      this.optimizeItems();
       this.$set(this, "world", null);
-      world.my = (val.length + 2) * 27;
       window.requestAnimationFrame(() => {
         const x1 = 0;
         const y1 = 0;
