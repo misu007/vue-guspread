@@ -68,7 +68,7 @@
         </tbody>
       </table>
     </div>
-    <div class="guspread-wrapper">
+    <div class="guspread-overlays">
       <div
         :class="`cursor ${cs.class}`"
         v-if="cursors.active"
@@ -78,8 +78,8 @@
       >
         <div v-if="isEditMode && cursors.active" ref="form" class="form-container">
           <form @submit="submitted">
-            <slot name="input" :field="selectedField" :item="value[s.a.r]">
-              <input type="text" v-model.lazy="value[s.a.r][selectedField[nameKey]]" />
+            <slot name="input" :field="selectedField" :item="selectedRow">
+              <input type="text" v-model.lazy="selectedRow[selectedField[nameKey]]" />
             </slot>
           </form>
         </div>
@@ -655,7 +655,7 @@ export default {
       return null;
     },
     worldRows() {
-      if (this.world && this.value) {
+      if (this.world) {
         const r1t = Math.floor(this.world.y1 / defaultCell.h);
         const diff = Math.floor(
           (this.world.y2 - this.world.y1) / defaultCell.h
@@ -978,7 +978,7 @@ export default {
     }
   }
 
-  .guspread-wrapper {
+  .guspread-overlays {
     position: absolute;
     top: 0;
     left: 0;
