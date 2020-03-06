@@ -555,9 +555,17 @@ export default {
       });
     },
     initWorld() {
+      this.changeWorld(true);
+    },
+    resizeWorld() {
+      this.changeWorld();
+    },
+    changeWorld(init) {
       const t = this.$refs.app;
-      world.x = 0;
-      world.y = 0;
+      if (init) {
+        world.x = 0;
+        world.y = 0;
+      }
       world.w = t.clientWidth;
       world.h = t.clientHeight;
       if (this.itemCount > 0) {
@@ -764,7 +772,7 @@ export default {
   mounted() {
     window.addEventListener("keydown", this.onKeyDown);
     window.addEventListener("click", this.clicked);
-    window.addEventListener("resize", this.initWorld);
+    window.addEventListener("resize", this.resizeWorld);
     this.optimizeFields();
     this.optimizeItems();
     this.initWorld();
@@ -772,7 +780,7 @@ export default {
   beforeDestroy() {
     window.removeEventListener("keydown", this.onKeyDown);
     window.removeEventListener("click", this.clicked);
-    window.removeEventListener("resize", this.initWorld);
+    window.removeEventListener("resize", this.resizeWorld);
   },
   watch: {
     scrolling(val) {
@@ -802,16 +810,6 @@ export default {
     },
     value(val) {
       this.optimizeItems();
-      this.$set(this, "world", null);
-      window.requestAnimationFrame(() => {
-        const x1 = 0;
-        const y1 = 0;
-        world.x = 0;
-        world.y = 0;
-        const x2 = x1 + this.$refs.app.clientWidth;
-        const y2 = y1 + this.$refs.app.clientHeight;
-        this.$set(this, "world", { x1, y1, x2, y2 });
-      });
     },
     cursors(val) {
       if (val && val.active) {
