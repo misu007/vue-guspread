@@ -86,8 +86,8 @@
       </div>
       <div
         class="copy-cursor"
-        v-if="c != null && c.active"
-        :style="`padding:0;transform: translate(${c.x}px, ${c.y}px);width:${c.w + 1}px;height:${c.h + 1}px;top:-1px;left:-1px`"
+        v-if="copyCursors.active"
+        :style="`padding:0;transform: translate(${copyCursors.x}px, ${copyCursors.y}px);width:${copyCursors.w + 1}px;height:${copyCursors.h + 1}px;top:-1px;left:-1px`"
       ></div>
       <v-guspread-mini-map
         v-if="showMinimap"
@@ -312,7 +312,6 @@ export default {
     },
     doCopy() {
       if (this.cursors && this.cursors.active) {
-        this.$set(this, "c", { ...this.cursors });
         const target = Object.assign({}, this.cursors);
         this.$set(this, "c", target);
         navigator.permissions
@@ -756,6 +755,28 @@ export default {
         return this.optimizedItems.length;
       }
       return 0;
+    },
+    copyCursors() {
+      if (
+        this.c &&
+        this.c.r1 != null &&
+        this.c.c1 != null &&
+        this.c.r2 != null &&
+        this.c.c2 != null &&
+        this.worldRows
+      ) {
+        const r1 = this.c.r1;
+        const r2 = this.c.r2;
+        const c1 = this.c.c1;
+        const c2 = this.c.c2;
+        const x = 50 + (c1 - this.worldCols.c1) * defaultCell.w;
+        const y = defaultCell.h + (r1 - this.worldRows.r1) * defaultCell.h;
+        const w = (c2 - c1 + 1) * defaultCell.w;
+        const h = (r2 - r1 + 1) * defaultCell.h;
+
+        return { active: true, x, y, w, h, r1, r2, c1, c2 };
+      }
+      return { active: false };
     },
     cursors() {
       if (
