@@ -32,7 +32,7 @@
 
           <template v-for="(rid, ridx) in visibleWorldRow">
             <v-guspread-tr
-              :key="`ttr${ridx}`"
+              :key="`ttr${rid}`"
               :item="thisValue[ridx]"
               :cursors="cursors"
               :thisField="thisField"
