@@ -3,16 +3,12 @@
     <div
       ref="minimap"
       class="guspread-minimap-background"
-      :style="`width:${map.w}px;height:${map.h}px`"
-    ></div>
-    <div
-      ref="area"
-      class="guspread-minimap-box"
-      :style="boxStyle"
+      :style="`width:${map.w}px;height:${map.h}px;cursor: ${dragging ? 'grabbing' : 'grab'};`"
       @mousedown="mDown"
       @mouseup="mDone"
       @mousemove="mMove"
     ></div>
+    <div ref="area" class="guspread-minimap-box" :style="boxStyle"></div>
   </div>
 </template>
 
@@ -64,7 +60,7 @@ export default {
       this.dragging = false;
     },
     mMove({ clientX, clientY }) {
-      if (this.dragging) {
+      if (this.dragging && clientX >= 0 && clientY >= 0) {
         const map = this.map;
         const box = this.box;
         const x = clientX - this.start.x;
@@ -80,9 +76,9 @@ export default {
     boxStyle() {
       return `width:${this.box.w}px;height:${this.box.h}px;right:${10 +
         this.map.w -
-        this.box.w}px;bottom:${10 + this.map.h - this.box.h}px;cursor: ${
-        this.dragging ? "grabbing" : "grab"
-      };transform: translate(${this.box.x}px,${this.box.y}px);`;
+        this.box.w}px;bottom:${10 +
+        this.map.h -
+        this.box.h}px;transform: translate(${this.box.x}px,${this.box.y}px);`;
     },
     show() {
       return true;
@@ -126,17 +122,18 @@ export default {
   opacity: 0;
   transition: opacity 0.4s;
   will-change: opacity;
-  pointer-events: all;
 
   .guspread-minimap-background {
     position: absolute;
-    border: 2px solid var(--brand-color);
-    border-radius: 3px;
+    border: 1px solid var(--brand-color);
+    border-radius: 2px;
     bottom: 10px;
     right: 10px;
     z-index: 7;
-    opacity: 0.4;
+    opacity: 0.7;
     background: rgba(255, 255, 255, 1);
+    pointer-events: all;
+    box-shadow: 0 0 15px -5px #888;
   }
 
   .guspread-minimap-box {
@@ -146,14 +143,12 @@ export default {
     pointer-events: all;
     opacity: 0;
     background-color: var(--brand-color);
+    pointer-events: none;
+    opacity: 0.7;
   }
 
   &:hover {
     opacity: 1;
-
-    .guspread-minimap-box {
-      opacity: 0.8;
-    }
   }
 }
 </style>
