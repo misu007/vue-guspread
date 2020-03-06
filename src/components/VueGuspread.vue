@@ -89,6 +89,13 @@
         v-if="c != null && c.active"
         :style="`padding:0;transform: translate(${c.x}px, ${c.y}px);width:${c.w + 1}px;height:${c.h + 1}px;top:-1px;left:-1px`"
       ></div>
+      <v-guspread-mini-map
+        v-if="!hideMinimap && world"
+        :showing="{r:worldRows,c:worldCols}"
+        :whole="{r:itemCount,c:fieldCount}"
+        :world="world"
+        @scrollbox="scrolledBox"
+      ></v-guspread-mini-map>
     </div>
   </div>
 </template>
@@ -96,6 +103,7 @@
 <script>
 import Papa from "papaparse";
 import VGuspreadTr from "@/components/VueGuspreadTableTr.vue";
+import VGuspreadMiniMap from "@/components/VueGuspreadMiniMap.vue";
 
 const calcMaxMix = (n1, d1, n2, d2) => {
   const max = Math.max(n1, n1 + d1, n2, n2 + d2);
@@ -130,7 +138,8 @@ const optimizeItem = item => {
 
 export default {
   components: {
-    VGuspreadTr
+    VGuspreadTr,
+    VGuspreadMiniMap
   },
   props: {
     value: {
@@ -144,6 +153,10 @@ export default {
     color: {
       type: String,
       default: "#41b883"
+    },
+    hideMinimap: {
+      type: Boolean,
+      default: false
     },
     nameKey: {
       type: String,
@@ -521,10 +534,10 @@ export default {
         });
       }
     },
-    scrolled(evt) {
+    scrolledBox({ r, c }) {
       if (!this.isEditMode && !scrolling) {
         scrolling = true;
-        this.myRequestFrame(evt);
+        this.myRequestFrame({ r, c });
       }
       this.scrolling = true;
       window.clearTimeout(this.delayTimeout);
@@ -532,25 +545,50 @@ export default {
         this.scrolling = false;
       }, 200);
     },
-    myRequestFrame(evt) {
+    scrolled(evt) {
+      if (!this.isEditMode && !scrolling) {
+        scrolling = true;
+        const deltaX = evt.deltaX;
+        const deltaY = evt.deltaY;
+        this.myRequestFrame({ deltaX, deltaY });
+      }
+      this.scrolling = true;
+      window.clearTimeout(this.delayTimeout);
+      this.delayTimeout = window.setTimeout(() => {
+        this.scrolling = false;
+      }, 200);
+    },
+    myRequestFrame({ deltaX, deltaY, r, c }) {
       window.requestAnimationFrame(() => {
-        const deltaX = evt ? evt.deltaX : 0;
-        const deltaY = evt ? evt.deltaY : 0;
-        const dx = Math.abs(deltaX);
-        const dy = Math.abs(deltaY);
-        const _x = dx > dy ? world.x + deltaX : world.x;
+        let _x = world.x;
+        let _y = world.y;
+        if (deltaX != null && deltaY != null) {
+          const dx = Math.abs(deltaX);
+          const dy = Math.abs(deltaY);
+          if (dx > dy) {
+            _x = world.x + deltaX;
+          } else if (dy >= dx) {
+            _y = world.y + deltaY;
+          }
+        } else if (r != null && c != null) {
+          _x = defaultCell.w * c + 50;
+          _y = defaultCell.h * r;
+        }
         const x =
           _x < 0 ? 0 : _x > world.mx - world.w ? world.mx - world.w : _x;
-        const _y = dy >= dx ? world.y + deltaY : world.y;
         const y =
           _y < 0 ? 0 : _y > world.my - world.h ? world.my - world.h : _y;
+
         const x1 = x;
         const y1 = y;
         const x2 = x1 + world.w + 1;
         const y2 = y1 + world.h;
         world.x = x;
         world.y = y;
-        this.$set(this, "world", { x1, y1, x2, y2 });
+        this.world.x1 = x1;
+        this.world.x2 = x2;
+        this.world.y1 = y1;
+        this.world.y2 = y2;
         scrolling = false;
       });
     },
@@ -566,8 +604,10 @@ export default {
         world.x = 0;
         world.y = 0;
       }
-      world.w = t.clientWidth;
-      world.h = t.clientHeight;
+      const w = t.clientWidth;
+      const h = t.clientHeight;
+      world.w = w;
+      world.h = h;
       if (this.itemCount > 0) {
         world.my = (this.itemCount + 2) * 27;
       }
@@ -579,7 +619,7 @@ export default {
       const y1 = world.y;
       const y2 = y1 + t.clientHeight;
       this.$nextTick(() => {
-        this.$set(this, "world", { x1, y1, x2, y2 });
+        this.$set(this, "world", { x1, y1, x2, y2, w, h });
       });
     },
     optimizeFields() {
@@ -1114,6 +1154,10 @@ export default {
         border: 2px dashed var(--brand-color);
         pointer-events: none;
       }
+    }
+
+    .guspread-scroll {
+      pointer-events: all;
     }
   }
 }
