@@ -88,6 +88,7 @@
               :thisField="thisField"
               :visibleWorldCol="visibleWorldCol"
               :cellClass="cellClass"
+              :rowClass="rowClass"
               :cellReadonly="cellReadonly"
               :nameKey="nameKey"
               :row="rid"
@@ -229,6 +230,10 @@ export default {
       default: null
     },
     cellClass: {
+      type: Function,
+      default: null
+    },
+    rowClass: {
       type: Function,
       default: null
     },

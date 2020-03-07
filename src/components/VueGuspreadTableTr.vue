@@ -1,5 +1,5 @@
 <template>
-  <tr class="guspread-item-tr">
+  <tr :class="thisClass">
     <template v-for="(cid, cidx) in visibleWorldCol">
       <v-guspread-td
         :key="'row-' + row + '-column-' + cid"
@@ -63,6 +63,19 @@ export default {
     cellReadonly: {
       type: Function,
       default: null
+    },
+    rowClass: {
+      type: Function,
+      default: null
+    }
+  },
+  computed: {
+    thisClass() {
+      const rowClass = this.rowClass;
+      if (rowClass) {
+        return rowClass({ item: this.item, row: this.row }).join(" ");
+      }
+      return "";
     }
   }
 };
