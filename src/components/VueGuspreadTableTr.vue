@@ -1,13 +1,5 @@
-<template >
+<template>
   <tr class="guspread-item-tr">
-    <th
-      :data-selectabove="cursors.active && (cursors.r1 - 1) == row"
-      :data-select="cursors.active && cursors.r1 <= row && cursors.r2 >= row"
-      @mousedown.exact="$emit('thmdown')"
-      @mousedown.shift.exact.stop="$emit('thmdownshift')"
-      @mouseenter="$emit('thmenter')"
-      @mouseup="$emit('thmup')"
-    >{{row + 1}}</th>
     <template v-for="(cid, cidx) in visibleWorldCol">
       <v-guspread-td
         :key="'row-' + row + '-column-' + cid"
@@ -75,37 +67,4 @@ export default {
   }
 };
 </script>
-<style scoped lang="stylus">
-.guspread-item-tr {
-  th {
-    height: 27px;
-    padding: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    font-size: 12px;
-    -moz-user-select: none;
-    -webkit-user-select: none;
-    -ms-user-select: none;
-    background-color: #f2f2f2;
-    position: relative;
-    width: 50px;
-    z-index: 3;
-  }
 
-  th[data-select=true] {
-    background-color: #dadada;
-    color: #000;
-  }
-
-  th[data-selectabove=true]::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border-bottom: 1px solid #dadada;
-    pointer-events: none;
-  }
-}
-</style>

@@ -1,6 +1,6 @@
 <template >
   <td
-    :class="`guspread-table-cell${extraCellClass}`"
+    :class="`guspread-table-cell ${extraCellClass}`"
     :data-readonly="dataReadOnly"
     @mousedown.exact="$emit('trmdown')"
     @mousedown.shift.exact.stop="$emit('trmdownshift')"
