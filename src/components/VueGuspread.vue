@@ -1,18 +1,33 @@
 <template>
   <div class="app-wrapper" :style="`--brand-color:${color}`" ref="app">
-    <div class="guspread-container" @wheel="scrolled">
+    <div
+      class="guspread-container"
+      :data-selectedallcol="isSelectedAllCol"
+      :data-selectedallrow="isSelectedAllRow"
+      :data-selectedall="isSelectedAll"
+      @wheel="scrolled"
+    >
+      <!-- Table Root -->
+      <div
+        class="guspread-table-root"
+        :data-selectleft="cursors.active && cursors.c1 == 0"
+        :data-selectabove="cursors.active && cursors.r1 == 0"
+        :style="`width:${rootRect.w - 1}px;height:${rootRect.h - 1}px;`"
+        @click="clickedHeaderRoot"
+      ></div>
+      <!-- Table Root -->
+
+      <!-- Header Row -->
       <table
-        class="guspread-table"
-        :data-selectedallcol="isSelectedAllCol"
-        :data-selectedallrow="isSelectedAllRow"
-        :data-selectedall="isSelectedAll"
+        class="guspread-table guspread-table-header-row"
+        :style="`top:0;left:${rootRect.w}px;transform:translateX(-${offsetWorld.x}px);`"
       >
         <thead>
           <tr>
-            <th @click="clickedHeaderRoot"></th>
             <template v-for="(cid, cidx) in visibleWorldCol">
               <th
                 :key="'hd-' + cid"
+                style="height:26px;"
                 :data-selectleft="cursors.active && (cursors.c1 - 1) == cid"
                 :data-select="cursors.active && cursors.c1 <= cid && cursors.c2 >= cid"
                 @mousedown.exact="clickedHeaderCell(cid)"
@@ -27,17 +42,53 @@
             </template>
           </tr>
         </thead>
+      </table>
+      <!-- Header Row -->
+
+      <!-- Header Col -->
+      <table
+        class="guspread-table guspread-table-header-col"
+        :style="`left:0;top:${rootRect.h}px;transform:translateY(-${offsetWorld.y}px);`"
+      >
         <tbody>
           <!-- Visible Row-->
 
-          <template v-for="(rid, ridx) in visibleWorldRow">
+          <template v-for="rid in visibleWorldRow">
+            <tr :key="`hcttr${rid}`">
+              <th
+                style="height:27px;width:49px;"
+                :data-selectabove="cursors.active && (cursors.r1 - 1) == rid"
+                :data-select="cursors.active && cursors.r1 <= rid && cursors.r2 >= rid"
+                @mousedown.exact="clickedHeaderRow(rid)"
+                @mousedown.shift.exact.stop="clickedHeaderRowWithShift(rid)"
+                @mouseenter="enteredMouse({r:rid, c:(fieldCount - 1)})"
+                @mouseup="handleMouseUp()"
+              >{{rid + 1}}</th>
+            </tr>
+          </template>
+
+          <!-- Visible Row-->
+        </tbody>
+      </table>
+      <!-- Header Col -->
+
+      <!-- Table Body -->
+      <table
+        class="guspread-table guspread-table-body"
+        :style="`top:${rootRect.h}px;left:${rootRect.w}px;transform:translate(-${offsetWorld.x}px,-${offsetWorld.y}px);`"
+      >
+        <tbody>
+          <!-- Visible Row-->
+
+          <template v-for="rid in visibleWorldRow">
             <v-guspread-tr
-              :key="`ttr${rid}`"
-              :item="thisValue[ridx]"
+              :key="`tbttr${rid}`"
+              :item="value[rid]"
               :cursors="cursors"
               :thisField="thisField"
               :visibleWorldCol="visibleWorldCol"
               :cellClass="cellClass"
+              :rowClass="rowClass"
               :cellReadonly="cellReadonly"
               :nameKey="nameKey"
               :row="rid"
@@ -67,8 +118,9 @@
           <!-- Visible Row-->
         </tbody>
       </table>
-    </div>
-    <div class="guspread-overlays">
+      <!-- Table Body -->
+
+      <!-- Cursor -->
       <div
         :class="`cursor ${cs.class}`"
         v-if="cursors.active"
@@ -84,18 +136,25 @@
           </form>
         </div>
       </div>
+      <!-- Cursor -->
+
+      <!-- Cursor -->
       <div
         class="copy-cursor"
         v-if="copyCursors.active"
         :style="`padding:0;transform: translate(${copyCursors.x}px, ${copyCursors.y}px);width:${copyCursors.w + 1}px;height:${copyCursors.h + 1}px;top:-1px;left:-1px`"
       ></div>
+      <!-- Cursor -->
+
+      <!-- Mini Map -->
       <v-guspread-mini-map
+        class="guspread-minimap"
         v-if="showMinimap"
-        :showing="{r:worldRows,c:worldCols}"
-        :whole="{r:itemCount,c:fieldCount}"
+        :wholeWorld="wholeWorld"
         :world="world"
         @scrollbox="scrolledBox"
       ></v-guspread-mini-map>
+      <!-- Mini Map -->
     </div>
   </div>
 </template>
@@ -171,6 +230,10 @@ export default {
       default: null
     },
     cellClass: {
+      type: Function,
+      default: null
+    },
+    rowClass: {
       type: Function,
       default: null
     },
@@ -533,10 +596,10 @@ export default {
         });
       }
     },
-    scrolledBox({ r, c }) {
+    scrolledBox({ x, y }) {
       if (!this.isEditMode && !scrolling) {
         scrolling = true;
-        this.myRequestFrame({ r, c });
+        this.myRequestFrame({ tx: x, ty: y });
       }
       this.scrolling = true;
       window.clearTimeout(this.delayTimeout);
@@ -557,7 +620,7 @@ export default {
         this.scrolling = false;
       }, 200);
     },
-    myRequestFrame({ deltaX, deltaY, r, c }) {
+    myRequestFrame({ deltaX, deltaY, tx, ty }) {
       window.requestAnimationFrame(() => {
         let _x = world.x;
         let _y = world.y;
@@ -569,14 +632,22 @@ export default {
           } else if (dy >= dx) {
             _y = world.y + deltaY;
           }
-        } else if (r != null && c != null) {
-          _x = defaultCell.w * c + 50;
-          _y = defaultCell.h * r;
+        } else if (tx != null && ty != null) {
+          _x = tx;
+          _y = ty;
         }
         const x =
-          _x < 0 ? 0 : _x > world.mx - world.w ? world.mx - world.w : _x;
+          _x < 0
+            ? 0
+            : _x > world.mx - world.w - 150
+            ? world.mx - world.w - 150
+            : _x;
         const y =
-          _y < 0 ? 0 : _y > world.my - world.h ? world.my - world.h : _y;
+          _y < 0
+            ? 0
+            : _y > world.my - world.h - 27
+            ? world.my - world.h - 27
+            : _y;
 
         const x1 = x;
         const y1 = y;
@@ -641,6 +712,22 @@ export default {
     }
   },
   computed: {
+    wholeWorld() {
+      const rc = this.itemCount;
+      const cc = this.fieldCount;
+      if (rc && cc) {
+        const h = defaultCell.h * (rc + 1);
+        const w = defaultCell.w * cc + 50;
+        return { w, h };
+      }
+      return null;
+    },
+    rootRect() {
+      return {
+        w: 50,
+        h: defaultCell.h
+      };
+    },
     showMinimap() {
       return (
         !this.hideMinimap &&
@@ -678,11 +765,16 @@ export default {
       }
       return [];
     },
-    thisValue() {
-      if (this.visibleWorldRow.length > 0) {
-        return this.value.slice(this.worldRows.r1, this.worldRows.r2);
+    offsetWorld() {
+      const world = this.world;
+      const ret = { x: 0, y: 0 };
+      if (world && world.x1 && world.x1 > 0) {
+        ret.x = world.x1 % defaultCell.w;
       }
-      return [];
+      if (world && world.y1 && world.y1 > 0) {
+        ret.y = world.y1 % defaultCell.h;
+      }
+      return ret;
     },
     visibleWorldCol() {
       if (this.worldCols && this.fieldCount > 0) {
@@ -715,7 +807,7 @@ export default {
         const diff = Math.floor(
           (this.world.y2 - this.world.y1) / defaultCell.h
         );
-        const r2t = r1t + diff;
+        const r2t = r1t + diff + 1;
         const r2m = this.itemCount;
         const r1 = r1t > 0 ? r1t : 0;
         const r2 = r2t < r2m ? r2t : r2m;
@@ -734,7 +826,7 @@ export default {
           (this.world.x2 - this.world.x1) / defaultCell.w
         );
         const c1 = c1t > 0 ? c1t : 0;
-        const c2t = c1 + diff + 1;
+        const c2t = c1 + diff + 2;
         const c2m = this.fieldCount;
         const c2 = c2t < c2m ? c2t : c2m;
         return { c1, c2 };
@@ -769,8 +861,12 @@ export default {
         const r2 = this.c.r2;
         const c1 = this.c.c1;
         const c2 = this.c.c2;
-        const x = 50 + (c1 - this.worldCols.c1) * defaultCell.w;
-        const y = defaultCell.h + (r1 - this.worldRows.r1) * defaultCell.h;
+        const x =
+          50 + (c1 - this.worldCols.c1) * defaultCell.w - this.offsetWorld.x;
+        const y =
+          defaultCell.h +
+          (r1 - this.worldRows.r1) * defaultCell.h -
+          this.offsetWorld.y;
         const w = (c2 - c1 + 1) * defaultCell.w;
         const h = (r2 - r1 + 1) * defaultCell.h;
 
@@ -790,8 +886,12 @@ export default {
         const r2 = Math.max(this.s.a.r, this.s.b.r);
         const c1 = Math.min(this.s.a.c, this.s.b.c);
         const c2 = Math.max(this.s.a.c, this.s.b.c);
-        const x = 50 + (c1 - this.worldCols.c1) * defaultCell.w;
-        const y = defaultCell.h + (r1 - this.worldRows.r1) * defaultCell.h;
+        const x =
+          50 + (c1 - this.worldCols.c1) * defaultCell.w - this.offsetWorld.x;
+        const y =
+          defaultCell.h +
+          (r1 - this.worldRows.r1) * defaultCell.h -
+          this.offsetWorld.y;
         const w = (c2 - c1 + 1) * defaultCell.w;
         const h = (r2 - r1 + 1) * defaultCell.h;
 
@@ -802,8 +902,12 @@ export default {
         const r2 = this.s.a.r;
         const c1 = this.s.a.c;
         const c2 = this.s.a.c;
-        const x = 50 + (c1 - this.worldCols.c1) * defaultCell.w;
-        const y = defaultCell.h + (r1 - this.worldRows.r1) * defaultCell.h;
+        const x =
+          50 + (c1 - this.worldCols.c1) * defaultCell.w - this.offsetWorld.x;
+        const y =
+          defaultCell.h +
+          (r1 - this.worldRows.r1) * defaultCell.h -
+          this.offsetWorld.y;
         const w = defaultCell.w;
         const h = defaultCell.h;
         return { active: true, multi: false, x, y, w, h, r1, r2, c1, c2 };
@@ -920,7 +1024,7 @@ export default {
   max-height: 100vh;
   position: relative;
   overflow: hidden;
-  background-color: #424242;
+  background-color: #eaeaea;
 
   .guspread-container {
     position: absolute;
@@ -930,10 +1034,81 @@ export default {
     height: 100%;
     z-index: 1;
 
+    &[data-selectedall=true] {
+      .guspread-table-root {
+        background-color: #777;
+        color: #fff;
+      }
+    }
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    .guspread-table-root {
+      z-index: 6;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background-color: #f2f2f2;
+      will-change: transform;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: -1px;
+        bottom: 0;
+        border-right: 1px solid #f2f2f2;
+        pointer-events: none;
+      }
+
+      &[data-selectleft=true] {
+        &::before {
+          border-color: #dadada;
+        }
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: -1px;
+        border-bottom: 1px solid #f2f2f2;
+        pointer-events: none;
+      }
+
+      &[data-selectabove=true] {
+        &::after {
+          border-color: #dadada;
+        }
+      }
+    }
+
     .guspread-table {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
       border-collapse: collapse;
       table-layout: fixed;
       width: fit-content;
+      will-change: transform;
+
+      &.guspread-table-header-row {
+        z-index: 5;
+      }
+
+      &.guspread-table-header-col {
+        z-index: 4;
+      }
+
+      &.guspread-table-body {
+        z-index: 1;
+      }
 
       thead {
         th {
@@ -941,24 +1116,18 @@ export default {
           font-weight: bold;
           text-align: center;
           width: 150px;
-          position: relative;
-        }
-
-        th:first-child {
-          width: 50px;
-          text-align: center;
-          z-index: 5;
+          top: 0;
         }
       }
 
       tr {
         th {
           background-color: #f2f2f2;
-          position: relative;
+          position: -webkit-sticky;
+          position: sticky;
         }
 
         th, td {
-          height: 27px;
           padding: 0;
           white-space: nowrap;
           overflow: hidden;
@@ -985,82 +1154,87 @@ export default {
         pointer-events: none;
       }
 
-      tbody tr {
-        th {
-          width: 50px;
-          z-index: 3;
-        }
+      tbody {
+        height: fit-content;
 
-        td {
-          width: 146px;
-          text-align: left;
-          padding: 0 2px;
-          position: relative;
+        tr {
+          th {
+            padding: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            font-size: 12px;
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            background-color: #f2f2f2;
+            position: relative;
+            z-index: 3;
+          }
 
-          &::before {
+          th[data-select=true] {
+            background-color: #dadada;
+            color: #000;
+          }
+
+          th[data-selectabove=true]::after {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            border-bottom: 1px solid #eaeaea;
-            border-right: 1px solid #eaeaea;
+            border-bottom: 1px solid #dadada;
             pointer-events: none;
           }
 
-          &::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            pointer-events: none;
-          }
+          td {
+            width: 146px;
+            height: 27px;
+            text-align: left;
+            padding: 0 2px;
+            position: relative;
 
-          &[data-readonly=true] {
-            background-color: #fafafa;
-            color: #999;
+            &::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              border-bottom: 1px solid #eaeaea;
+              border-right: 1px solid #eaeaea;
+              pointer-events: none;
+            }
+
+            &::after {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              pointer-events: none;
+            }
+
+            &[data-readonly=true] {
+              background-color: #fafafa;
+              color: #999;
+            }
           }
         }
       }
     }
 
-    .guspread-table[data-selectedall=true] >>> tr th, .guspread-table[data-selectedallrow=true] thead tr th[data-select=true], .guspread-table[data-selectedallcol=true] tbody >>> tr th[data-select=true] {
-      background-color: #777;
-      color: #fff;
-    }
-
-    .guspread-table[data-selectedallrow=true] {
-      >>> th[data-selectleft=true]::before {
-        border-color: #777;
+    &[data-selectedallrow=true] {
+      >>> [data-selectleft=true]::before {
+        border-color: #777 !important;
       }
     }
 
-    .guspread-table[data-selectedallcol=true] {
-      >>> th[data-selectabove=true]::before {
-        border-color: #777;
+    &[data-selectedallcol=true] {
+      >>> [data-selectabove=true]::after {
+        border-color: #777 !important;
       }
-    }
-  }
-
-  .guspread-overlays {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 2;
-    pointer-events: none;
-    overflow: scroll;
-
-    &::-webkit-scrollbar {
-      display: none;
-    }
-
-    .guspread-scroll-container {
-      position: static;
     }
 
     .form-container {
@@ -1185,9 +1359,17 @@ export default {
       }
     }
 
-    .guspread-scroll {
-      pointer-events: all;
+    .guspread-minimap {
+      position: absolute;
+      z-index: 7;
+      bottom: 10px;
+      right: 10px;
     }
+  }
+
+  .guspread-container[data-selectedall=true] >>> tr th, .guspread-container[data-selectedallrow=true] thead tr th[data-select=true], .guspread-container[data-selectedallcol=true] tbody >>> tr th[data-select=true] {
+    background-color: #777;
+    color: #fff;
   }
 }
 </style>

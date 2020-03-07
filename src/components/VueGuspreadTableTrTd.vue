@@ -1,6 +1,6 @@
 <template >
   <td
-    :class="`guspread-table-cell${extraCellClass}`"
+    :class="extraCellClass"
     :data-readonly="dataReadOnly"
     @mousedown.exact="$emit('trmdown')"
     @mousedown.shift.exact.stop="$emit('trmdownshift')"
@@ -88,7 +88,7 @@ export default {
 };
 </script>
 <style scoped lang="stylus">
-.guspread-table-cell {
+td {
   height: 27px;
   padding: 0;
   white-space: nowrap;

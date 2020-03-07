@@ -209,7 +209,14 @@ export default {
       <td></td>       
       <td>cellClass</td>
       <td>Function</td>
-      <td>You can optionaly customize the classname for each cells</td>
+      <td>You can optionaly customize the classname for each cells (td)</td>
+      <td>null</td>
+    </tr>
+    <tr>
+      <td></td>       
+      <td>rowClass</td>
+      <td>Function</td>
+      <td>You can optionaly customize the classname for each row (tr)</td>
       <td>null</td>
     </tr>
     <tr>
