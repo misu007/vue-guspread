@@ -7,8 +7,10 @@
       @mousedown="mDown"
       @mouseup="mDone"
       @mousemove="mMove"
+      @mouseenter="active = true"
+      @mouseleave="active = false"
     ></div>
-    <div ref="area" class="guspread-minimap-box" :style="boxStyle"></div>
+    <div ref="box" class="guspread-minimap-box" :style="boxStyle"></div>
   </div>
 </template>
 
@@ -30,6 +32,7 @@ export default {
     }
   },
   data: () => ({
+    active: false,
     dragging: false,
     box: {
       w: 100,
@@ -122,20 +125,22 @@ export default {
       },
       deep: true
     },
-    world: {
-      handler({ x1, y1, w, h }) {
+    active(val) {
+      if (val) {
         if (!this.dragging) {
+          const tw = this.world;
           const map = this.map;
           const ww = this.wholeWorld;
           const box = this.box;
           if (map && map.w > 0 && map.h > 0) {
-            const x = map.w > box.w ? ((map.w - box.w) * x1) / (ww.w - w) : 0;
-            const y = map.h > box.h ? ((map.h - box.h) * y1) / (ww.h - h) : 0;
+            const x =
+              map.w > box.w ? ((map.w - box.w) * tw.x1) / (ww.w - tw.w) : 0;
+            const y =
+              map.h > box.h ? ((map.h - box.h) * tw.y1) / (ww.h - tw.h) : 0;
             this.moveBox({ x, y });
           }
         }
-      },
-      deep: true
+      }
     }
   }
 };
