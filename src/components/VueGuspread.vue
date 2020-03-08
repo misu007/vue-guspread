@@ -1120,7 +1120,7 @@ export default {
         }
       }
 
-      tr {
+      >>> tr {
         th {
           background-color: #f2f2f2;
           position: -webkit-sticky;
@@ -1155,7 +1155,7 @@ export default {
         pointer-events: none;
       }
 
-      tbody {
+      >>> tbody {
         height: fit-content;
 
         tr {
@@ -1194,6 +1194,7 @@ export default {
             text-align: left;
             padding: 0 2px;
             position: relative;
+            background-color: #fff;
 
             &::before {
               content: '';
