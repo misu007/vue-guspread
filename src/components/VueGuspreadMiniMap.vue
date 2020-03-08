@@ -154,8 +154,7 @@ export default {
     right: 10px;
     z-index: 7;
     opacity: 0.9;
-    background-color: rgba(255, 255, 255, 1);
-    background-color: #aaa;
+    background-color: #bbb;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='20' viewBox='0 0 100 20'%3E%3Cpath fill='white' d='M0,0 L99,0 99,19 0,19'%3E%3C/path%3E%3C/svg%3E");
     background-size: 25px 5px;
     pointer-events: all;
