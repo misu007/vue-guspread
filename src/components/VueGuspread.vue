@@ -1128,6 +1128,7 @@ export default {
         }
 
         th, td {
+          box-sizing: border-box;
           padding: 0;
           white-space: nowrap;
           overflow: hidden;
@@ -1188,7 +1189,7 @@ export default {
           }
 
           td {
-            width: 146px;
+            width: 150px;
             height: 27px;
             text-align: left;
             padding: 0 2px;

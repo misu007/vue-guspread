@@ -13,6 +13,7 @@
 </template>
 
 <script>
+let moving = false;
 export default {
   props: {
     showing: {
@@ -52,6 +53,16 @@ export default {
     mDone() {
       this.dragging = false;
     },
+    moveBox({ x, y }) {
+      if (!moving) {
+        moving = true;
+        window.requestAnimationFrame(() => {
+          this.box.x = x;
+          this.box.y = y;
+          moving = false;
+        });
+      }
+    },
     mMove({ clientX, clientY }) {
       if (this.dragging && clientX >= 0 && clientY >= 0) {
         const map = this.map;
@@ -60,8 +71,7 @@ export default {
         const ty = clientY - this.start.y;
         const x = tx < 0 ? 0 : tx > map.w - box.w ? map.w - box.w : tx;
         const y = ty < 0 ? 0 : ty > map.h - box.h ? map.h - box.h : ty;
-        this.box.x = x;
-        this.box.y = y;
+        this.moveBox({ x, y });
       }
     }
   },
@@ -106,7 +116,7 @@ export default {
           const ax = map.w > box.w ? ((ww.w - tw.w) * x) / (map.w - box.w) : 0;
           const ay = map.h > box.h ? ((ww.h - tw.h) * y) / (map.h - box.h) : 0;
           if (ax >= 0 && ay >= 0) {
-            this.$emit("scrollbox", { x: ax, y: ay });
+            this.$emit("scrollbox", { x: Math.round(ax), y: Math.round(ay) });
           }
         }
       },
@@ -121,9 +131,7 @@ export default {
           if (map && map.w > 0 && map.h > 0) {
             const x = map.w > box.w ? ((map.w - box.w) * x1) / (ww.w - w) : 0;
             const y = map.h > box.h ? ((map.h - box.h) * y1) / (ww.h - h) : 0;
-            return { x, y };
-            this.box.x = x;
-            this.box.y = y;
+            this.moveBox({ x, y });
           }
         }
       },
@@ -146,7 +154,10 @@ export default {
     right: 10px;
     z-index: 7;
     opacity: 0.9;
-    background: rgba(255, 255, 255, 1);
+    background-color: rgba(255, 255, 255, 1);
+    background-color: #aaa;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='20' viewBox='0 0 100 20'%3E%3Cpath fill='white' d='M0,0 L99,0 99,19 0,19'%3E%3C/path%3E%3C/svg%3E");
+    background-size: 25px 5px;
     pointer-events: all;
     box-shadow: 0 0 15px -5px #aaa;
   }
@@ -159,7 +170,7 @@ export default {
     opacity: 0;
     background-color: var(--brand-color);
     pointer-events: none;
-    opacity: 0.4;
+    opacity: 0.2;
     will-change: transform;
   }
 
