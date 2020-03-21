@@ -597,70 +597,72 @@ export default {
       }
     },
     scrolledBox({ x, y }) {
-      if (!this.isEditMode && !scrolling) {
-        scrolling = true;
-        this.myRequestFrame({ tx: x, ty: y });
+      if (!this.isEditMode) {
+        this.calcScrolledPosition({ tx: x, ty: y });
       }
-      this.scrolling = true;
       window.clearTimeout(this.delayTimeout);
       this.delayTimeout = window.setTimeout(() => {
         this.scrolling = false;
-      }, 200);
+        scrolling = false;
+      }, 800);
     },
-    scrolled(evt) {
-      if (!this.isEditMode && !scrolling) {
-        scrolling = true;
-        const deltaX = evt.deltaX;
-        const deltaY = evt.deltaY;
-        this.myRequestFrame({ deltaX, deltaY });
+    scrolled({ deltaX, deltaY }) {
+      if (!this.isEditMode) {
+        this.calcScrolledPosition({ deltaX, deltaY });
       }
-      this.scrolling = true;
       window.clearTimeout(this.delayTimeout);
       this.delayTimeout = window.setTimeout(() => {
         this.scrolling = false;
-      }, 200);
+        scrolling = false;
+      }, 800);
     },
-    myRequestFrame({ deltaX, deltaY, tx, ty }) {
+    animateFrame() {
       window.requestAnimationFrame(() => {
-        let _x = world.x;
-        let _y = world.y;
-        if (deltaX != null && deltaY != null) {
-          const dx = Math.abs(deltaX);
-          const dy = Math.abs(deltaY);
-          if (dx > dy) {
-            _x = world.x + deltaX;
-          } else if (dy >= dx) {
-            _y = world.y + deltaY;
-          }
-        } else if (tx != null && ty != null) {
-          _x = tx;
-          _y = ty;
-        }
-        const x =
-          _x < 0
-            ? 0
-            : _x > world.mx - world.w - 150
-            ? world.mx - world.w - 150
-            : _x;
-        const y =
-          _y < 0
-            ? 0
-            : _y > world.my - world.h - 27
-            ? world.my - world.h - 27
-            : _y;
-
-        const x1 = x;
-        const y1 = y;
+        const x1 = world.x;
+        const y1 = world.y;
         const x2 = x1 + world.w + 1;
         const y2 = y1 + world.h;
-        world.x = x;
-        world.y = y;
         this.world.x1 = x1;
         this.world.x2 = x2;
         this.world.y1 = y1;
         this.world.y2 = y2;
-        scrolling = false;
+        if (scrolling) this.animateFrame();
       });
+    },
+    calcScrolledPosition({ deltaX, deltaY, tx, ty }) {
+      let _x = world.x;
+      let _y = world.y;
+      if (deltaX != null && deltaY != null) {
+        const dx = Math.abs(deltaX);
+        const dy = Math.abs(deltaY);
+        if (dx > dy) {
+          _x = world.x + deltaX;
+        } else if (dy >= dx) {
+          _y = world.y + deltaY;
+        }
+      } else if (tx != null && ty != null) {
+        _x = tx;
+        _y = ty;
+      }
+      const x1 =
+        _x < 0
+          ? 0
+          : _x > world.mx - world.w - 150
+          ? world.mx - world.w - 150
+          : _x;
+      const y1 =
+        _y < 0
+          ? 0
+          : _y > world.my - world.h - 27
+          ? world.my - world.h - 27
+          : _y;
+      world.x = x1;
+      world.y = y1;
+      if (!scrolling) {
+        scrolling = true;
+        this.scrolling = true;
+        this.animateFrame();
+      }
     },
     initWorld() {
       this.changeWorld(true);
