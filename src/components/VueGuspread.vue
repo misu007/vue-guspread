@@ -414,39 +414,58 @@ export default {
     },
     doPaste() {
       this.$set(this, "c", null);
-      navigator.permissions.query({ name: "clipboard-read" }).then(result => {
-        if (result.state == "granted" || result.state == "prompt") {
-          navigator.clipboard.readText().then(tsv => {
-            const rows = Papa.parse(tsv, {
-              dynamicTyping: true,
-              delimiter: "\t"
+      navigator.permissions
+        .query({ name: "clipboard-read" })
+        .then(({ state }) => {
+          if (state == "granted" || state == "prompt") {
+            navigator.clipboard.readText().then(tsv => {
+              const { data } = Papa.parse(tsv, {
+                dynamicTyping: true,
+                delimiter: "\t"
+              });
+              if (data && data.length > 0) {
+                const a = this.s.a;
+                const b = this.s.b;
+                let r = a.r;
+                let c = a.c;
+                let w = 1;
+                let h = 1;
+                if (b.r != null && b.c != null) {
+                  if (b.r < a.r) {
+                    r = b.r;
+                  }
+                  if (b.c < a.c) {
+                    c = b.c;
+                  }
+                  h = Math.abs(a.r - b.r) + 1;
+                  w = Math.abs(a.c - b.c) + 1;
+                }
+                this.doReplaceData({ r, c, w, h }, data);
+              }
             });
-            if (rows && rows.data && rows.data.length > 0) {
-              const r = this.s.a.r;
-              const c = this.s.a.c;
-              this.doReplaceData({ r, c }, rows.data);
-            }
-          });
-        }
-      });
+          }
+        });
     },
     doReplaceData(location, rows) {
+      const selectedw = location.w;
+      const selectedh = location.h;
       const rCount = rows.length;
       const cCount = rows[0].length;
       const rMax = this.itemCount - 1;
       const cMax = this.fieldCount - 1;
-      const rToBe = location.r + rCount - 1;
-      const cToBe = location.c + cCount - 1;
-
+      const rToBe = location.r - 1 + (rCount > selectedh ? rCount : selectedh);
+      const cToBe = location.c - 1 + (cCount > selectedw ? cCount : selectedw);
       for (let r = location.r; r < this.itemCount; r++) {
-        if (r >= location.r + rCount) {
+        if (r >= location.r + rCount && r >= location.r + selectedh) {
           break;
         }
         for (let c = location.c; c < this.fieldCount; c++) {
-          if (c >= location.c + cCount) {
+          if (c >= location.c + cCount && c >= location.c + selectedw) {
             break;
           }
-          let val = rows[r - location.r][c - location.c];
+          const rIdx = (r - location.r) % rCount;
+          const cIdx = (c - location.c) % cCount;
+          let val = rows[rIdx][cIdx];
           const isReadonly = this.cellReadonly
             ? this.cellReadonly({
                 field: this.optimizedFields[c],
@@ -465,7 +484,6 @@ export default {
           }
         }
       }
-
       const r = rToBe > rMax ? rMax : rToBe;
       const c = cToBe > cMax ? cMax : cToBe;
       this.s.b = { r, c };
@@ -597,70 +615,72 @@ export default {
       }
     },
     scrolledBox({ x, y }) {
-      if (!this.isEditMode && !scrolling) {
-        scrolling = true;
-        this.myRequestFrame({ tx: x, ty: y });
+      if (!this.isEditMode) {
+        this.calcScrolledPosition({ tx: x, ty: y });
       }
-      this.scrolling = true;
       window.clearTimeout(this.delayTimeout);
       this.delayTimeout = window.setTimeout(() => {
         this.scrolling = false;
-      }, 200);
+        scrolling = false;
+      }, 800);
     },
-    scrolled(evt) {
-      if (!this.isEditMode && !scrolling) {
-        scrolling = true;
-        const deltaX = evt.deltaX;
-        const deltaY = evt.deltaY;
-        this.myRequestFrame({ deltaX, deltaY });
+    scrolled({ deltaX, deltaY }) {
+      if (!this.isEditMode) {
+        this.calcScrolledPosition({ deltaX, deltaY });
       }
-      this.scrolling = true;
       window.clearTimeout(this.delayTimeout);
       this.delayTimeout = window.setTimeout(() => {
         this.scrolling = false;
-      }, 200);
+        scrolling = false;
+      }, 800);
     },
-    myRequestFrame({ deltaX, deltaY, tx, ty }) {
+    animateFrame() {
       window.requestAnimationFrame(() => {
-        let _x = world.x;
-        let _y = world.y;
-        if (deltaX != null && deltaY != null) {
-          const dx = Math.abs(deltaX);
-          const dy = Math.abs(deltaY);
-          if (dx > dy) {
-            _x = world.x + deltaX;
-          } else if (dy >= dx) {
-            _y = world.y + deltaY;
-          }
-        } else if (tx != null && ty != null) {
-          _x = tx;
-          _y = ty;
-        }
-        const x =
-          _x < 0
-            ? 0
-            : _x > world.mx - world.w - 150
-            ? world.mx - world.w - 150
-            : _x;
-        const y =
-          _y < 0
-            ? 0
-            : _y > world.my - world.h - 27
-            ? world.my - world.h - 27
-            : _y;
-
-        const x1 = x;
-        const y1 = y;
+        const x1 = world.x;
+        const y1 = world.y;
         const x2 = x1 + world.w + 1;
         const y2 = y1 + world.h;
-        world.x = x;
-        world.y = y;
         this.world.x1 = x1;
         this.world.x2 = x2;
         this.world.y1 = y1;
         this.world.y2 = y2;
-        scrolling = false;
+        if (scrolling) this.animateFrame();
       });
+    },
+    calcScrolledPosition({ deltaX, deltaY, tx, ty }) {
+      let _x = world.x;
+      let _y = world.y;
+      if (deltaX != null && deltaY != null) {
+        const dx = Math.abs(deltaX);
+        const dy = Math.abs(deltaY);
+        if (dx > dy) {
+          _x = world.x + deltaX;
+        } else if (dy >= dx) {
+          _y = world.y + deltaY;
+        }
+      } else if (tx != null && ty != null) {
+        _x = tx;
+        _y = ty;
+      }
+      const x1 =
+        _x < 0
+          ? 0
+          : _x > world.mx - world.w - 150
+          ? world.mx - world.w - 150
+          : _x;
+      const y1 =
+        _y < 0
+          ? 0
+          : _y > world.my - world.h - 27
+          ? world.my - world.h - 27
+          : _y;
+      world.x = x1;
+      world.y = y1;
+      if (!scrolling) {
+        scrolling = true;
+        this.scrolling = true;
+        this.animateFrame();
+      }
     },
     initWorld() {
       this.changeWorld(true);
@@ -1021,6 +1041,7 @@ export default {
 .app-wrapper {
   width: 100%;
   height: 100%;
+  min-height: 297px;
   max-height: 100vh;
   position: relative;
   overflow: hidden;
