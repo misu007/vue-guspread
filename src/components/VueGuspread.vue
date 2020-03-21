@@ -414,39 +414,58 @@ export default {
     },
     doPaste() {
       this.$set(this, "c", null);
-      navigator.permissions.query({ name: "clipboard-read" }).then(result => {
-        if (result.state == "granted" || result.state == "prompt") {
-          navigator.clipboard.readText().then(tsv => {
-            const rows = Papa.parse(tsv, {
-              dynamicTyping: true,
-              delimiter: "\t"
+      navigator.permissions
+        .query({ name: "clipboard-read" })
+        .then(({ state }) => {
+          if (state == "granted" || state == "prompt") {
+            navigator.clipboard.readText().then(tsv => {
+              const { data } = Papa.parse(tsv, {
+                dynamicTyping: true,
+                delimiter: "\t"
+              });
+              if (data && data.length > 0) {
+                const a = this.s.a;
+                const b = this.s.b;
+                let r = a.r;
+                let c = a.c;
+                let w = 1;
+                let h = 1;
+                if (b.r != null && b.c != null) {
+                  if (b.r < a.r) {
+                    r = b.r;
+                  }
+                  if (b.c < a.c) {
+                    c = b.c;
+                  }
+                  h = Math.abs(a.r - b.r) + 1;
+                  w = Math.abs(a.c - b.c) + 1;
+                }
+                this.doReplaceData({ r, c, w, h }, data);
+              }
             });
-            if (rows && rows.data && rows.data.length > 0) {
-              const r = this.s.a.r;
-              const c = this.s.a.c;
-              this.doReplaceData({ r, c }, rows.data);
-            }
-          });
-        }
-      });
+          }
+        });
     },
     doReplaceData(location, rows) {
+      const selectedw = location.w;
+      const selectedh = location.h;
       const rCount = rows.length;
       const cCount = rows[0].length;
       const rMax = this.itemCount - 1;
       const cMax = this.fieldCount - 1;
-      const rToBe = location.r + rCount - 1;
-      const cToBe = location.c + cCount - 1;
-
+      const rToBe = location.r - 1 + (rCount > selectedh ? rCount : selectedh);
+      const cToBe = location.c - 1 + (cCount > selectedw ? cCount : selectedw);
       for (let r = location.r; r < this.itemCount; r++) {
-        if (r >= location.r + rCount) {
+        if (r >= location.r + rCount && r >= location.r + selectedh) {
           break;
         }
         for (let c = location.c; c < this.fieldCount; c++) {
-          if (c >= location.c + cCount) {
+          if (c >= location.c + cCount && c >= location.c + selectedw) {
             break;
           }
-          let val = rows[r - location.r][c - location.c];
+          const rIdx = (r - location.r) % rCount;
+          const cIdx = (c - location.c) % cCount;
+          let val = rows[rIdx][cIdx];
           const isReadonly = this.cellReadonly
             ? this.cellReadonly({
                 field: this.optimizedFields[c],
@@ -465,7 +484,6 @@ export default {
           }
         }
       }
-
       const r = rToBe > rMax ? rMax : rToBe;
       const c = cToBe > cMax ? cMax : cToBe;
       this.s.b = { r, c };
