@@ -1041,6 +1041,7 @@ export default {
 .app-wrapper {
   width: 100%;
   height: 100%;
+  min-height: 297px;
   max-height: 100vh;
   position: relative;
   overflow: hidden;
