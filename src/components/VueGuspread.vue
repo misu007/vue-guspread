@@ -270,9 +270,10 @@ export default {
     optimizedItems: []
   }),
   methods: {
-    moveNext(callback) {
+    async moveNext(callback) {
       this.isEditMode = false;
-      this.$nextTick(callback);
+      await this.$nextTick(callback);
+      this.scrollCursorIntoView();
     },
     clicked(e) {
       if (!this.$refs.app.contains(e.target)) {
@@ -342,25 +343,43 @@ export default {
     handleMouseUp() {
       this.isSelecting = false;
     },
-    scrollCursorIntoView() {},
+    scrollCursorIntoView() {
+      const c = this.cursors;
+      const { x1, y1, h, w } = this.world;
+      const cx1 = c.x - 50;
+      const cy1 = c.y - 27;
+      const cx2 = c.x + c.w;
+      const cy2 = c.y + c.h;
+      if (!(0 <= cx1 && cx2 <= w && 0 <= cy1 && cy2 <= h)) {
+        let x = x1;
+        let y = y1;
+        if (0 > cx1) {
+          x = x + cx1;
+        } else if (cx2 > w) {
+          x = x + (cx2 - w);
+        }
+        if (0 > cy1) {
+          y = y + cy1;
+        } else if (cy2 > h) {
+          y = y + (cy2 - h);
+        }
+        this.scrolledBox({ x, y });
+      }
+    },
     onKeyDown(e) {
       if (this.active && !this.isEditMode) {
         if (e.key == "ArrowUp") {
           e.preventDefault();
           this.moveCursorUp(e.shiftKey);
-          this.scrollCursorIntoView();
         } else if (e.key == "ArrowRight") {
           e.preventDefault();
           this.moveCursorRight(e.shiftKey);
-          this.scrollCursorIntoView();
         } else if (e.key == "ArrowDown") {
           e.preventDefault();
           this.moveCursorDown(e.shiftKey);
-          this.scrollCursorIntoView();
         } else if (e.key == "ArrowLeft") {
           e.preventDefault();
           this.moveCursorLeft(e.shiftKey);
-          this.scrollCursorIntoView();
         } else if (e.key == "Enter") {
           if (this.s.a.r != null && this.s.a.c != null) {
             e.preventDefault();
@@ -466,32 +485,34 @@ export default {
       const cMax = this.fieldCount - 1;
       const rToBe = location.r - 1 + (rCount > selectedh ? rCount : selectedh);
       const cToBe = location.c - 1 + (cCount > selectedw ? cCount : selectedw);
-      for (let r = location.r; r < this.itemCount; r++) {
+      const optimizedFields = this.optimizedFields;
+      const nameKey = this.nameKey;
+      const value = this.value;
+      const cellReadonly = this.cellReadonly;
+      const itemCount = this.itemCount;
+      const fieldCount = this.fieldCount;
+      for (let r = location.r; r < itemCount; r++) {
         if (r >= location.r + rCount && r >= location.r + selectedh) {
           break;
         }
-        for (let c = location.c; c < this.fieldCount; c++) {
+        for (let c = location.c; c < fieldCount; c++) {
           if (c >= location.c + cCount && c >= location.c + selectedw) {
             break;
           }
           const rIdx = (r - location.r) % rCount;
           const cIdx = (c - location.c) % cCount;
           let val = rows[rIdx][cIdx];
-          const isReadonly = this.cellReadonly
-            ? this.cellReadonly({
-                field: this.optimizedFields[c],
-                item: this.value[r],
+          const isReadonly = cellReadonly
+            ? cellReadonly({
+                field: optimizedFields[c],
+                item: value[r],
                 row: r,
                 col: c,
-                value: this.value[r][this.optimizedFields[c][this.nameKey]]
+                value: value[r][optimizedFields[c][nameKey]]
               })
             : false;
           if (!isReadonly) {
-            this.$set(
-              this.value[r],
-              this.optimizedFields[c][this.nameKey],
-              val
-            );
+            this.$set(value[r], optimizedFields[c][nameKey], val);
           }
         }
       }
@@ -508,11 +529,12 @@ export default {
         const t = shiftKey ? this.s.b : this.s.a;
         let r = t.r;
         let c = t.c;
-        if (!(r == 0 && c == 0)) {
+        if (r >= 0) {
           r--;
           if (r < 0) {
-            r = this.itemCount - 1;
-            c = c - 1;
+            r = 0;
+            //r = this.itemCount - 1;
+            //c = c - 1;
           }
           if (!shiftKey) this.s.a = { r, c };
           this.s.b = { r, c };
@@ -524,11 +546,12 @@ export default {
         const t = shiftKey ? this.s.b : this.s.a;
         let r = t.r;
         let c = t.c;
-        if (!(r == 0 && c == 0)) {
+        if (c >= 0) {
           c--;
           if (c < 0) {
-            r = r - 1;
-            c = this.fieldCount - 1;
+            c = 0;
+            //r = r - 1;
+            //c = this.fieldCount - 1;
           }
 
           if (!shiftKey) this.s.a = { r, c };
@@ -541,11 +564,12 @@ export default {
         const t = shiftKey ? this.s.b : this.s.a;
         let r = t.r;
         let c = t.c;
-        if (!(r == this.itemCount - 1 && c == this.fieldCount - 1)) {
+        if (r <= this.itemCount - 1) {
           r++;
           if (r > this.itemCount - 1) {
-            r = 0;
-            c = c + 1;
+            r = this.itemCount - 1;
+            //r = 0;
+            //c = c + 1;
           }
 
           if (!shiftKey) this.s.a = { r, c };
@@ -558,17 +582,25 @@ export default {
         const t = shiftKey ? this.s.b : this.s.a;
         let r = t.r;
         let c = t.c;
-        if (!(r == this.itemCount - 1 && c == this.fieldCount - 1)) {
+        if (c <= this.fieldCount - 1) {
           c++;
           if (c > this.fieldCount - 1) {
-            r = r + 1;
-            c = 0;
+            c = this.fieldCount - 1;
+            //r = r + 1;
+            //c = 0;
           }
 
           if (!shiftKey) this.s.a = { r, c };
           this.s.b = { r, c };
         }
       });
+    },
+    shakeCursor() {
+      window.clearTimeout(this.cs.delayTimeout);
+      this.cs.class = "cursor-shake";
+      this.cs.delayTimeout = window.setTimeout(() => {
+        this.cs.class = "";
+      }, DELAY);
     },
     dblclickedCell({ r, c }) {
       this.changeToEditmode(r, c);
@@ -586,11 +618,7 @@ export default {
       if (!isReadonly) {
         this.isEditMode = true;
       } else {
-        window.clearTimeout(this.cs.delayTimeout);
-        this.cs.class = "cursor-shake";
-        this.cs.delayTimeout = window.setTimeout(() => {
-          this.cs.class = "";
-        }, DELAY);
+        this.shakeCursor();
       }
     },
     getPositions(r, c) {
@@ -1324,6 +1352,7 @@ export default {
       caret-color: var(--brand-color);
       transition: box-shadow 0.2s ease;
       box-shadow: 0px 0px 12px -3px transparent;
+      will-change: transform, box-shadow;
 
       &.cursor-shake {
         &::before {
