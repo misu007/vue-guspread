@@ -366,10 +366,36 @@ export default {
             e.preventDefault();
             this.changeToEditmode(this.s.a.r, this.s.a.c);
           }
+        } else if (e.key == "Backspace") {
+          this.doDel();
         } else if (e.key == "c" && (e.metaKey || e.ctrlKey)) {
           this.doCopy();
         } else if (e.key == "v" && (e.metaKey || e.ctrlKey)) {
           this.doPaste();
+        }
+      }
+    },
+    doDel() {
+      const area = this.selectedArea;
+      if (area != null) {
+        const value = this.value;
+        const optimizedFields = this.optimizedFields;
+        const nameKey = this.nameKey;
+        for (let r = area.r; r < area.r + area.h; r++) {
+          for (let c = area.c; c < area.c + area.w; c++) {
+            const isReadonly = this.cellReadonly
+              ? this.cellReadonly({
+                  field: optimizedFields[c],
+                  item: value[r],
+                  row: r,
+                  col: c,
+                  value: value[r][optimizedFields[c][nameKey]]
+                })
+              : false;
+            if (!isReadonly) {
+              this.$set(this.value[r], optimizedFields[c][nameKey], null);
+            }
+          }
         }
       }
     },
@@ -423,24 +449,9 @@ export default {
                 dynamicTyping: true,
                 delimiter: "\t"
               });
-              if (data && data.length > 0) {
-                const a = this.s.a;
-                const b = this.s.b;
-                let r = a.r;
-                let c = a.c;
-                let w = 1;
-                let h = 1;
-                if (b.r != null && b.c != null) {
-                  if (b.r < a.r) {
-                    r = b.r;
-                  }
-                  if (b.c < a.c) {
-                    c = b.c;
-                  }
-                  h = Math.abs(a.r - b.r) + 1;
-                  w = Math.abs(a.c - b.c) + 1;
-                }
-                this.doReplaceData({ r, c, w, h }, data);
+              const selectedArea = this.selectedArea;
+              if (data && data.length > 0 && selectedArea != null) {
+                this.doReplaceData(selectedArea, data);
               }
             });
           }
@@ -732,6 +743,28 @@ export default {
     }
   },
   computed: {
+    selectedArea() {
+      const a = this.s.a;
+      if (a != null) {
+        const b = this.s.b;
+        let r = a.r;
+        let c = a.c;
+        let w = 1;
+        let h = 1;
+        if (b.r != null && b.c != null) {
+          if (b.r < a.r) {
+            r = b.r;
+          }
+          if (b.c < a.c) {
+            c = b.c;
+          }
+          h = Math.abs(a.r - b.r) + 1;
+          w = Math.abs(a.c - b.c) + 1;
+        }
+        return { r, c, w, h };
+      }
+      return null;
+    },
     wholeWorld() {
       const rc = this.itemCount;
       const cc = this.fieldCount;
