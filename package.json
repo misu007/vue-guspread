@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^4.2.0",
-    "@vue/cli-service": "^4.2.0",
+    "@vue/cli-service": "^5.0.8",
     "stylus": "^0.54.7",
     "stylus-loader": "^3.0.2",
     "vue-template-compiler": "^2.6.11"
